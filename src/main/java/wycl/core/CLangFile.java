@@ -116,9 +116,9 @@ public class CLangFile {
 
 		public static class Method extends Abstract implements Declaration {
 			private final List<Parameter> parameters;
-			private final Block body;
+			private final Statement.Block body;
 
-			public Method(String name, List<Parameter> parameters, Block body) {
+			public Method(String name, List<Parameter> parameters, Statement.Block body) {
 				super(name);
 				this.parameters = parameters;
 				this.body = body;
@@ -128,7 +128,7 @@ public class CLangFile {
 				return parameters;
 			}
 
-			public Block getBody() {
+			public Statement.Block getBody() {
 				return body;
 			}
 		}
@@ -179,25 +179,28 @@ public class CLangFile {
 
 	public interface Statement extends Term {
 
-	}
+		public static class Block implements Statement {
+			private List<Statement> terms;
 
-	public static class Block implements Statement {
-		private List<Statement> terms;
+			public Block() {
+				terms = new ArrayList<>();
+			}
 
-		public Block() {
-			terms = new ArrayList<>();
+			public Block(List<Statement> terms) {
+				this.terms = new ArrayList<>(terms);
+			}
+
+			public Block(Statement... terms) {
+				this.terms = Arrays.asList(terms);
+			}
+
+			public List<Statement> getTerms() {
+				return terms;
+			}
 		}
 
-		public Block(List<Statement> terms) {
-			this.terms = new ArrayList<>(terms);
-		}
+		public static class Skip implements Statement {
 
-		public Block(Statement... terms) {
-			this.terms = Arrays.asList(terms);
-		}
-
-		public List<Statement> getTerms() {
-			return terms;
 		}
 	}
 

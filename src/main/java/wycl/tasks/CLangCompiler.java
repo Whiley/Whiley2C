@@ -13,12 +13,15 @@
 // limitations under the License.
 package wycl.tasks;
 
+import java.util.Collections;
 import java.util.List;
 
 import wybs.lang.Build.Meter;
 import wycc.util.Pair;
 import wycl.core.CLangFile;
 import wycl.core.CLangFile.Term;
+import wycl.core.CLangFile.Statement;
+import wycl.core.CLangFile.Declaration;
 import wycl.util.AbstractTranslator;
 import wyil.lang.WyilFile;
 import wyil.lang.WyilFile.Decl;
@@ -99,8 +102,7 @@ public class CLangCompiler extends AbstractTranslator<Term> {
 
 	@Override
 	public Term constructMethod(Method d, List<Term> precondition, List<Term> postcondition, Term body) {
-		// TODO Auto-generated method stub
-		throw new IllegalArgumentException();
+		return new Declaration.Method(d.getName().get(), Collections.EMPTY_LIST, (Statement.Block) body);
 	}
 
 	@Override
@@ -129,8 +131,7 @@ public class CLangCompiler extends AbstractTranslator<Term> {
 
 	@Override
 	public Term constructBlock(Block stmt, List<Term> stmts) {
-		// TODO Auto-generated method stub
-		throw new IllegalArgumentException();
+		return new Statement.Block((List) stmts);
 	}
 
 	@Override
@@ -195,8 +196,7 @@ public class CLangCompiler extends AbstractTranslator<Term> {
 
 	@Override
 	public Term constructSkip(Skip stmt) {
-		// TODO Auto-generated method stub
-		throw new IllegalArgumentException();
+		return new Statement.Skip();
 	}
 
 	@Override
