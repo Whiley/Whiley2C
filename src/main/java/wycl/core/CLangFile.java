@@ -209,6 +209,49 @@ public class CLangFile {
 	// =========================================================================
 
 	public interface Expression extends Term {
+
+		public abstract class Infix implements Expression {
+			private final Expression lhs;
+			private final Expression rhs;
+
+			private Infix(Expression lhs, Expression rhs) {
+				this.lhs = lhs;
+				this.rhs = rhs;
+			}
+
+			public Expression getLeftHandSide() {
+				return lhs;
+			}
+
+			public Expression getRightHandSide() {
+				return rhs;
+			}
+		}
+
+		public class Add extends Infix{
+			private Add(Expression lhs, Expression rhs) {
+				super(lhs,rhs);
+			}
+		}
+
+		public class Sub extends Infix{
+			private Sub(Expression lhs, Expression rhs) {
+				super(lhs,rhs);
+			}
+		}
+
+		public class Div extends Infix{
+			private Div(Expression lhs, Expression rhs) {
+				super(lhs,rhs);
+			}
+		}
+
+		public class Mul extends Infix{
+			private Mul(Expression lhs, Expression rhs) {
+				super(lhs,rhs);
+			}
+		}
+
 		public class IntConstant implements Expression {
 			private final int constant;
 
@@ -221,33 +264,39 @@ public class CLangFile {
 			}
 		}
 
-		public class Equals implements Expression {
-			private final boolean negated;
-			private final Expression lhs;
-			private final Expression rhs;
-
-			public Equals(Expression lhs, Expression rhs) {
-				this.negated = false;
-				this.lhs = lhs;
-				this.rhs = rhs;
+		public class Equals extends Infix {
+			private Equals(Expression lhs, Expression rhs) {
+				super(lhs,rhs);
 			}
+		}
 
-			public Equals(boolean negated, Expression lhs, Expression rhs) {
-				this.negated = negated;
-				this.lhs = lhs;
-				this.rhs = rhs;
+		public class NotEquals extends Infix {
+			private NotEquals(Expression lhs, Expression rhs) {
+				super(lhs,rhs);
 			}
+		}
 
-			public boolean isNegated() {
-				return negated;
+		public class LessThan extends Infix {
+			private LessThan(Expression lhs, Expression rhs) {
+				super(lhs,rhs);
 			}
+		}
 
-			public Expression getLeftHandSide() {
-				return lhs;
+		public class LessThanEqual extends Infix {
+			private LessThanEqual(Expression lhs, Expression rhs) {
+				super(lhs,rhs);
 			}
+		}
 
-			public Expression getRightHandSide() {
-				return rhs;
+		public class GreaterThan extends Infix {
+			private GreaterThan(Expression lhs, Expression rhs) {
+				super(lhs,rhs);
+			}
+		}
+
+		public class GreaterThanEqual extends Infix {
+			private GreaterThanEqual(Expression lhs, Expression rhs) {
+				super(lhs,rhs);
 			}
 		}
 	}
@@ -258,6 +307,50 @@ public class CLangFile {
 
 	public interface Type {
 
+	}
+
+	// =========================================================================
+	// Constructors
+	// =========================================================================
+
+	public static Expression EQ(Expression lhs, Expression rhs) {
+		return new Expression.Equals(lhs, rhs);
+	}
+
+	public static Expression NEQ(Expression lhs, Expression rhs) {
+		return new Expression.NotEquals(lhs, rhs);
+	}
+
+	public static Expression LT(Expression lhs, Expression rhs) {
+		return new Expression.LessThan(lhs, rhs);
+	}
+
+	public static Expression LTEQ(Expression lhs, Expression rhs) {
+		return new Expression.LessThanEqual(lhs, rhs);
+	}
+
+	public static Expression GT(Expression lhs, Expression rhs) {
+		return new Expression.GreaterThan(lhs, rhs);
+	}
+
+	public static Expression GTEQ(Expression lhs, Expression rhs) {
+		return new Expression.GreaterThanEqual(lhs, rhs);
+	}
+
+	public static Expression ADD(Expression lhs, Expression rhs) {
+		return new Expression.Add(lhs, rhs);
+	}
+
+	public static Expression SUB(Expression lhs, Expression rhs) {
+		return new Expression.Sub(lhs, rhs);
+	}
+
+	public static Expression MUL(Expression lhs, Expression rhs) {
+		return new Expression.Mul(lhs, rhs);
+	}
+
+	public static Expression DIV(Expression lhs, Expression rhs) {
+		return new Expression.Div(lhs, rhs);
 	}
 }
 

@@ -104,6 +104,10 @@ public class CLangFilePrinter {
 	private void writeExpression(Expression expr) {
 		if(expr instanceof Expression.Equals) {
 			writeEquals((Expression.Equals) expr);
+		} else if(expr instanceof Expression.LessThan) {
+			writeLessThan((Expression.LessThan) expr);
+		} else if(expr instanceof Expression.GreaterThan) {
+			writeGreaterThan((Expression.GreaterThan) expr);
 		} else if(expr instanceof Expression.IntConstant) {
 			writeIntConstant((Expression.IntConstant) expr);
 		}
@@ -115,6 +119,26 @@ public class CLangFilePrinter {
 			out.print(" != ");
 		} else {
 			out.print(" == ");
+		}
+		writeExpression(expr.getRightHandSide());
+	}
+
+	private void writeLessThan(Expression.LessThan expr) {
+		writeExpression(expr.getLeftHandSide());
+		if(expr.isStrict()) {
+			out.print(" < ");
+		} else {
+			out.print(" <= ");
+		}
+		writeExpression(expr.getRightHandSide());
+	}
+
+	private void writeGreaterThan(Expression.GreaterThan expr) {
+		writeExpression(expr.getLeftHandSide());
+		if(expr.isStrict()) {
+			out.print(" > ");
+		} else {
+			out.print(" >= ");
 		}
 		writeExpression(expr.getRightHandSide());
 	}

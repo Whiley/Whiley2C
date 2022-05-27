@@ -382,31 +382,27 @@ public class CLangCompiler extends AbstractTranslator<Declaration,Statement,Expr
 
 	@Override
 	public Expression constructEqual(Equal expr, Expression lhs, Expression rhs) {
-		return new Expression.Equals(lhs, rhs);
+		return CLangFile.EQ(lhs, rhs);
 	}
 
 	@Override
 	public Expression constructIntegerLessThan(IntegerLessThan expr, Expression lhs, Expression rhs) {
-		// TODO Auto-generated method stub
-		throw new IllegalArgumentException();
+		return CLangFile.LT(lhs, rhs);
 	}
 
 	@Override
 	public Expression constructIntegerLessThanOrEqual(IntegerLessThanOrEqual expr, Expression lhs, Expression rhs) {
-		// TODO Auto-generated method stub
-		throw new IllegalArgumentException();
+		return CLangFile.LTEQ(lhs, rhs);
 	}
 
 	@Override
 	public Expression constructIntegerGreaterThan(IntegerGreaterThan expr, Expression lhs, Expression rhs) {
-		// TODO Auto-generated method stub
-		throw new IllegalArgumentException();
+		return CLangFile.GT(lhs, rhs);
 	}
 
 	@Override
 	public Expression constructIntegerGreaterThanOrEqual(IntegerGreaterThanOrEqual expr, Expression lhs, Expression rhs) {
-		// TODO Auto-generated method stub
-		throw new IllegalArgumentException();
+		return CLangFile.GTEQ(lhs, rhs);
 	}
 
 	@Override
@@ -417,26 +413,22 @@ public class CLangCompiler extends AbstractTranslator<Declaration,Statement,Expr
 
 	@Override
 	public Expression constructIntegerAddition(IntegerAddition expr, Expression lhs, Expression rhs) {
-		// TODO Auto-generated method stub
-		throw new IllegalArgumentException();
+		return CLangFile.ADD(lhs,rhs);
 	}
 
 	@Override
 	public Expression constructIntegerSubtraction(IntegerSubtraction expr, Expression lhs, Expression rhs) {
-		// TODO Auto-generated method stub
-		throw new IllegalArgumentException();
+		return CLangFile.SUB(lhs,rhs);
 	}
 
 	@Override
 	public Expression constructIntegerMultiplication(IntegerMultiplication expr, Expression lhs, Expression rhs) {
-		// TODO Auto-generated method stub
-		throw new IllegalArgumentException();
+		return CLangFile.MUL(lhs,rhs);
 	}
 
 	@Override
 	public Expression constructIntegerDivision(IntegerDivision expr, Expression lhs, Expression rhs) {
-		// TODO Auto-generated method stub
-		throw new IllegalArgumentException();
+		return CLangFile.DIV(lhs,rhs);
 	}
 
 	@Override
@@ -524,7 +516,7 @@ public class CLangCompiler extends AbstractTranslator<Declaration,Statement,Expr
 
 	@Override
 	public Expression constructNotEqual(NotEqual expr, Expression lhs, Expression rhs) {
-		return new Expression.Equals(true, lhs, rhs);
+		return CLangFile.NEQ(lhs, rhs);
 	}
 
 	@Override
