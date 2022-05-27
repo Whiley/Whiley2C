@@ -13,51 +13,48 @@
 // limitations under the License.
 package wycl.tasks;
 
-import java.io.IOException;
-import java.util.Arrays;
+import java.util.ArrayList;
 import java.util.Collection;
-import java.util.function.Function;
+import java.util.List;
 
-import wybs.lang.Build;
-import wybs.lang.Build.Meter;
-import wybs.lang.Build.Project;
-import wybs.util.AbstractBuildTask;
+import wycc.util.Trie;
 import wycl.core.CLangFile;
-import wyfs.lang.Path;
-import wyfs.lang.Path.Entry;
 import wyil.lang.WyilFile;
 
-public class CLangCompileTask extends AbstractBuildTask<WyilFile, CLangFile>{
 
-	public CLangCompileTask(Project project, Entry<CLangFile> target, Path.Entry<WyilFile> sources) {
-		super(project, target, Arrays.asList(sources));
+public class CLangCompileTask {
+	/**
+	 * Identifier for target of this build task.
+	 */
+	private Trie target = Trie.fromString("main");
+	/**
+	 * The set of source files that this task will compiler from.
+	 */
+	private final List<WyilFile> sources = new ArrayList<>();
+
+	public CLangCompileTask setTarget(Trie target) {
+		this.target = target;
+		return this;
 	}
 
-	@Override
-	public Function<Meter, Boolean> initialise() throws IOException {
-		// Extract target and source files for compilation. This is the component which
-		// requires I/O.
-		CLangFile jsf = target.read();
-		WyilFile wyf = sources.get(0).read();
-		// Construct the lambda for subsequent execution. This will eventually make its
-		// way into some kind of execution pool, possibly for concurrent execution with
-		// other tasks.
-		return (Build.Meter meter) -> execute(meter, jsf, wyf);
+	public CLangCompileTask addSource(WyilFile f) {
+		this.sources.add(f);
+		return this;
 	}
 
+	public CLangCompileTask addSources(Collection<WyilFile> fs) {
+		this.sources.addAll(fs);
+		return this;
+	}
 
-	public boolean execute(Build.Meter meter, CLangFile target, WyilFile source) {
-		meter = meter.fork("CLangCompiler");
-		// FIXME: this is a fairly temporary solution at the moment which just
-		// turns the WyIL file directly into a string. A more useful solution
-		// will be to generate an intermediate file representing JavaScript in
-		// an AST. This would enable, for example, better support for different
-		// standards. It would also enable minification, and allow support for
-		// different module systems (e.g. CommonJS).
-		new CLangCompiler(meter,target).visitModule(source);
+	public CLangFile run() {
+		// Construct initial (empty) JavaScript file
+		CLangFile cFile = new CLangFile();
+		// Process source files one by one
+		for (WyilFile i : sources) {
+			new CLangCompiler(cFile).visitModule(i);
+		}
 		//
-		meter.done();
-		// How can this fail?
-		return true;
+		return cFile;
 	}
 }

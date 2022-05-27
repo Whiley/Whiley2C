@@ -16,13 +16,13 @@ package wycl.tasks;
 import java.util.Collections;
 import java.util.List;
 
-import wybs.lang.Build.Meter;
+import wycc.util.AbstractCompilationUnit.Value;
 import wycc.util.Pair;
 import wycl.core.CLangFile;
-import wycl.core.CLangFile.Term;
+import wycl.core.CLangFile.Expression;
 import wycl.core.CLangFile.Statement;
 import wycl.core.CLangFile.Declaration;
-import wycl.util.AbstractTranslator;
+import wyil.util.AbstractTranslator;
 import wyil.lang.WyilFile;
 import wyil.lang.WyilFile.Decl;
 import wyil.lang.WyilFile.Decl.*;
@@ -32,7 +32,7 @@ import wyil.util.IncrementalSubtypingEnvironment;
 import wyil.util.Subtyping;
 import wyil.util.TypeMangler;
 
-public class CLangCompiler extends AbstractTranslator<Term> {
+public class CLangCompiler extends AbstractTranslator<Declaration,Statement,Expression> {
 	/**
 	 * Provides a standard mechanism for writing out type mangles.
 	 */
@@ -49,8 +49,8 @@ public class CLangCompiler extends AbstractTranslator<Term> {
 	 */
 	private final CLangFile cFile;
 
-	public CLangCompiler(Meter meter, CLangFile cFile) {
-		super(meter, subtyping);
+	public CLangCompiler(CLangFile cFile) {
+		super(subtyping);
 		this.cFile = cFile;
 	}
 
@@ -71,444 +71,503 @@ public class CLangCompiler extends AbstractTranslator<Term> {
 	// ====================================================================================
 
 	@Override
-	public Term constructImport(Import d) {
+	public Declaration constructImport(Import d) {
 		// TODO Auto-generated method stub
 		throw new IllegalArgumentException();
 	}
 
 	@Override
-	public Term constructType(Type d, List<Term> invariant) {
+	public Declaration constructType(Type d, List<Expression> invariant) {
 		// TODO Auto-generated method stub
 		throw new IllegalArgumentException();
 	}
 
 	@Override
-	public Term constructStaticVariable(StaticVariable d, Term initialiser) {
+	public Declaration constructStaticVariable(StaticVariable d, Expression initialiser) {
 		// TODO Auto-generated method stub
 		throw new IllegalArgumentException();
 	}
 
 	@Override
-	public Term constructProperty(Property decl, List<Term> clauses) {
+	public Declaration constructProperty(Property decl, Statement body) {
 		// TODO Auto-generated method stub
 		throw new IllegalArgumentException();
 	}
 
 	@Override
-	public Term constructFunction(Function d, List<Term> precondition, List<Term> postcondition, Term body) {
+	public Declaration constructVariant(Variant decl, List<Expression> clauses) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public Declaration constructFunction(Function d, List<Expression> precondition, List<Expression> postcondition, Statement body) {
 		// TODO Auto-generated method stub
 		throw new IllegalArgumentException();
 	}
 
 	@Override
-	public Term constructMethod(Method d, List<Term> precondition, List<Term> postcondition, Term body) {
+	public Declaration constructMethod(Method d, List<Expression> precondition, List<Expression> postcondition, Statement body) {
 		return new Declaration.Method(d.getName().get(), Collections.EMPTY_LIST, (Statement.Block) body);
 	}
 
 	@Override
-	public Term constructLambda(Lambda decl, Term body) {
+	public Expression constructLambda(Lambda decl, Expression body) {
 		// TODO Auto-generated method stub
 		throw new IllegalArgumentException();
 	}
 
 	@Override
-	public Term constructAssert(Assert stmt, Term condition) {
+	public Statement constructAssert(Assert stmt, Expression condition) {
 		// TODO Auto-generated method stub
 		throw new IllegalArgumentException();
 	}
 
 	@Override
-	public Term constructAssign(Assign stmt, List<Term> lvals, List<Term> rvals) {
+	public Statement constructAssign(Assign stmt, List<Expression> lvals, List<Expression> rvals) {
 		// TODO Auto-generated method stub
 		throw new IllegalArgumentException();
 	}
 
 	@Override
-	public Term constructAssume(Assume stmt, Term condition) {
+	public Statement constructAssume(Assume stmt, Expression condition) {
 		// TODO Auto-generated method stub
 		throw new IllegalArgumentException();
 	}
 
 	@Override
-	public Term constructBlock(Block stmt, List<Term> stmts) {
-		return new Statement.Block((List) stmts);
+	public Statement constructBlock(Block stmt, List<Statement> stmts) {
+		return new Statement.Block(stmts);
 	}
 
 	@Override
-	public Term constructBreak(Break stmt) {
+	public Statement constructBreak(Break stmt) {
 		// TODO Auto-generated method stub
 		throw new IllegalArgumentException();
 	}
 
 	@Override
-	public Term constructContinue(Continue stmt) {
+	public Statement constructContinue(Continue stmt) {
 		// TODO Auto-generated method stub
 		throw new IllegalArgumentException();
 	}
 
 	@Override
-	public Term constructDebug(Debug stmt, Term operand) {
+	public Statement constructDebug(Debug stmt, Expression operand) {
 		// TODO Auto-generated method stub
 		throw new IllegalArgumentException();
 	}
 
 	@Override
-	public Term constructDoWhile(DoWhile stmt, Term body, Term condition, List<Term> invariant) {
+	public Statement constructDoWhile(DoWhile stmt, Statement body, Expression condition, List<Expression> invariant) {
 		// TODO Auto-generated method stub
 		throw new IllegalArgumentException();
 	}
 
 	@Override
-	public Term constructFail(Fail stmt) {
+	public Statement constructFail(Fail stmt) {
 		// TODO Auto-generated method stub
 		throw new IllegalArgumentException();
 	}
 
 	@Override
-	public Term constructFor(For stmt, Pair<Term, Term> range, List<Term> invariant, Term body) {
+	public Statement constructFor(For stmt, Pair<Expression, Expression> range, List<Expression> invariant, Statement body) {
 		// TODO Auto-generated method stub
 		throw new IllegalArgumentException();
 	}
 
 	@Override
-	public Term constructIfElse(IfElse stmt, Term condition, Term trueBranch, Term falseBranch) {
+	public Statement constructIfElse(IfElse stmt, Expression condition, Statement trueBranch, Statement falseBranch) {
+		return new Statement.If(condition, trueBranch, falseBranch);
+	}
+
+	@Override
+	public Statement constructInitialiser(Initialiser stmt, Expression initialiser) {
 		// TODO Auto-generated method stub
 		throw new IllegalArgumentException();
 	}
 
 	@Override
-	public Term constructInitialiser(Initialiser stmt, Term initialiser) {
+	public Statement constructInvokeStmt(Invoke expr, List<Expression> arguments) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public Statement constructIndirectInvokeStmt(IndirectInvoke expr, Expression source, List<Expression> arguments) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public Statement constructNamedBlock(NamedBlock stmt, List<Statement> stmts) {
 		// TODO Auto-generated method stub
 		throw new IllegalArgumentException();
 	}
 
 	@Override
-	public Term constructNamedBlock(NamedBlock stmt, List<Term> stmts) {
+	public Statement constructReturn(Return stmt, Expression ret) {
 		// TODO Auto-generated method stub
 		throw new IllegalArgumentException();
 	}
 
 	@Override
-	public Term constructReturn(Return stmt, Term ret) {
-		// TODO Auto-generated method stub
-		throw new IllegalArgumentException();
-	}
-
-	@Override
-	public Term constructSkip(Skip stmt) {
+	public Statement constructSkip(Skip stmt) {
 		return new Statement.Skip();
 	}
 
 	@Override
-	public Term constructSwitch(Switch stmt, Term condition, List<Pair<List<Term>, Term>> cases) {
+	public Statement constructSwitch(Switch stmt, Expression condition, List<Pair<List<Expression>, Statement>> cases) {
 		// TODO Auto-generated method stub
 		throw new IllegalArgumentException();
 	}
 
 	@Override
-	public Term constructWhile(While stmt, Term condition, List<Term> invariant, Term body) {
+	public Statement constructWhile(While stmt, Expression condition, List<Expression> invariant, Statement body) {
+		return new Statement.While(condition, body);
+	}
+
+	@Override
+	public Expression constructArrayAccessLVal(ArrayAccess expr, Expression source, Expression index) {
 		// TODO Auto-generated method stub
 		throw new IllegalArgumentException();
 	}
 
 	@Override
-	public Term constructArrayAccessLVal(ArrayAccess expr, Term source, Term index) {
+	public Expression constructDereferenceLVal(Dereference expr, Expression operand) {
 		// TODO Auto-generated method stub
 		throw new IllegalArgumentException();
 	}
 
 	@Override
-	public Term constructDereferenceLVal(Dereference expr, Term operand) {
+	public Expression constructFieldDereferenceLVal(FieldDereference expr, Expression operand) {
 		// TODO Auto-generated method stub
 		throw new IllegalArgumentException();
 	}
 
 	@Override
-	public Term constructFieldDereferenceLVal(FieldDereference expr, Term operand) {
+	public Expression constructRecordAccessLVal(RecordAccess expr, Expression source) {
 		// TODO Auto-generated method stub
 		throw new IllegalArgumentException();
 	}
 
 	@Override
-	public Term constructRecordAccessLVal(RecordAccess expr, Term source) {
+	public Expression constructRecordUpdate(RecordUpdate expr, Expression source, Expression value) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public Expression constructTupleInitialiserLVal(TupleInitialiser expr, List<Expression> source) {
 		// TODO Auto-generated method stub
 		throw new IllegalArgumentException();
 	}
 
 	@Override
-	public Term constructTupleInitialiserLVal(TupleInitialiser expr, List<Term> source) {
+	public Expression constructVariableAccessLVal(VariableAccess expr) {
 		// TODO Auto-generated method stub
 		throw new IllegalArgumentException();
 	}
 
 	@Override
-	public Term constructVariableAccessLVal(VariableAccess expr) {
+	public Expression constructStaticVariableAccessLVal(StaticVariableAccess expr) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public Expression constructArrayAccess(ArrayAccess expr, Expression source, Expression index) {
 		// TODO Auto-generated method stub
 		throw new IllegalArgumentException();
 	}
 
 	@Override
-	public Term constructArrayAccess(ArrayAccess expr, Term source, Term index) {
+	public Expression constructArrayLength(ArrayLength expr, Expression source) {
 		// TODO Auto-generated method stub
 		throw new IllegalArgumentException();
 	}
 
 	@Override
-	public Term constructArrayLength(ArrayLength expr, Term source) {
+	public Expression constructArrayGenerator(ArrayGenerator expr, Expression value, Expression length) {
 		// TODO Auto-generated method stub
 		throw new IllegalArgumentException();
 	}
 
 	@Override
-	public Term constructArrayGenerator(ArrayGenerator expr, Term value, Term length) {
+	public Expression constructArrayInitialiser(ArrayInitialiser expr, List<Expression> values) {
 		// TODO Auto-generated method stub
 		throw new IllegalArgumentException();
 	}
 
 	@Override
-	public Term constructArrayInitialiser(ArrayInitialiser expr, List<Term> values) {
+	public Expression constructArrayUpdate(ArrayUpdate expr, Expression source, Expression index, Expression value) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public Expression constructBitwiseComplement(BitwiseComplement expr, Expression operand) {
 		// TODO Auto-generated method stub
 		throw new IllegalArgumentException();
 	}
 
 	@Override
-	public Term constructBitwiseComplement(BitwiseComplement expr, Term operand) {
+	public Expression constructBitwiseAnd(BitwiseAnd expr, List<Expression> operands) {
 		// TODO Auto-generated method stub
 		throw new IllegalArgumentException();
 	}
 
 	@Override
-	public Term constructBitwiseAnd(BitwiseAnd expr, List<Term> operands) {
+	public Expression constructBitwiseOr(BitwiseOr expr, List<Expression> operands) {
 		// TODO Auto-generated method stub
 		throw new IllegalArgumentException();
 	}
 
 	@Override
-	public Term constructBitwiseOr(BitwiseOr expr, List<Term> operands) {
+	public Expression constructBitwiseXor(BitwiseXor expr, List<Expression> operands) {
 		// TODO Auto-generated method stub
 		throw new IllegalArgumentException();
 	}
 
 	@Override
-	public Term constructBitwiseXor(BitwiseXor expr, List<Term> operands) {
+	public Expression constructBitwiseShiftLeft(BitwiseShiftLeft expr, Expression lhs, Expression rhs) {
 		// TODO Auto-generated method stub
 		throw new IllegalArgumentException();
 	}
 
 	@Override
-	public Term constructBitwiseShiftLeft(BitwiseShiftLeft expr, Term lhs, Term rhs) {
+	public Expression constructBitwiseShiftRight(BitwiseShiftRight expr, Expression lhs, Expression rhs) {
 		// TODO Auto-generated method stub
 		throw new IllegalArgumentException();
 	}
 
 	@Override
-	public Term constructBitwiseShiftRight(BitwiseShiftRight expr, Term lhs, Term rhs) {
+	public Expression constructCast(Cast expr, Expression operand) {
 		// TODO Auto-generated method stub
 		throw new IllegalArgumentException();
 	}
 
 	@Override
-	public Term constructCast(Cast expr, Term operand) {
+	public Expression constructConstant(Constant expr) {
+		Value v = expr.getValue();
+		//
+		if(v instanceof Value.Bool) {
+			Value.Bool b = (Value.Bool) v;
+			if(b.get()) {
+				return new Expression.IntConstant(1);
+			} else {
+				return new Expression.IntConstant(0);
+			}
+		} else if(v instanceof Value.Int) {
+			Value.Int b = (Value.Int) v;
+			// TODO: clearly a hack for now.
+			return new Expression.IntConstant(b.get().intValueExact());
+		} else {
+			// TODO Auto-generated method stub
+			throw new IllegalArgumentException();
+		}
+	}
+
+	@Override
+	public Expression constructDereference(Dereference expr, Expression operand) {
 		// TODO Auto-generated method stub
 		throw new IllegalArgumentException();
 	}
 
 	@Override
-	public Term constructConstant(Constant expr) {
+	public Expression constructFieldDereference(FieldDereference expr, Expression operand) {
 		// TODO Auto-generated method stub
 		throw new IllegalArgumentException();
 	}
 
 	@Override
-	public Term constructDereference(Dereference expr, Term operand) {
+	public Expression constructEqual(Equal expr, Expression lhs, Expression rhs) {
+		return new Expression.Equals(lhs, rhs);
+	}
+
+	@Override
+	public Expression constructIntegerLessThan(IntegerLessThan expr, Expression lhs, Expression rhs) {
 		// TODO Auto-generated method stub
 		throw new IllegalArgumentException();
 	}
 
 	@Override
-	public Term constructFieldDereference(FieldDereference expr, Term operand) {
+	public Expression constructIntegerLessThanOrEqual(IntegerLessThanOrEqual expr, Expression lhs, Expression rhs) {
 		// TODO Auto-generated method stub
 		throw new IllegalArgumentException();
 	}
 
 	@Override
-	public Term constructEqual(Equal expr, Term lhs, Term rhs) {
+	public Expression constructIntegerGreaterThan(IntegerGreaterThan expr, Expression lhs, Expression rhs) {
 		// TODO Auto-generated method stub
 		throw new IllegalArgumentException();
 	}
 
 	@Override
-	public Term constructIntegerLessThan(IntegerLessThan expr, Term lhs, Term rhs) {
+	public Expression constructIntegerGreaterThanOrEqual(IntegerGreaterThanOrEqual expr, Expression lhs, Expression rhs) {
 		// TODO Auto-generated method stub
 		throw new IllegalArgumentException();
 	}
 
 	@Override
-	public Term constructIntegerLessThanOrEqual(IntegerLessThanOrEqual expr, Term lhs, Term rhs) {
+	public Expression constructIntegerNegation(IntegerNegation expr, Expression operand) {
 		// TODO Auto-generated method stub
 		throw new IllegalArgumentException();
 	}
 
 	@Override
-	public Term constructIntegerGreaterThan(IntegerGreaterThan expr, Term lhs, Term rhs) {
+	public Expression constructIntegerAddition(IntegerAddition expr, Expression lhs, Expression rhs) {
 		// TODO Auto-generated method stub
 		throw new IllegalArgumentException();
 	}
 
 	@Override
-	public Term constructIntegerGreaterThanOrEqual(IntegerGreaterThanOrEqual expr, Term lhs, Term rhs) {
+	public Expression constructIntegerSubtraction(IntegerSubtraction expr, Expression lhs, Expression rhs) {
 		// TODO Auto-generated method stub
 		throw new IllegalArgumentException();
 	}
 
 	@Override
-	public Term constructIntegerNegation(IntegerNegation expr, Term operand) {
+	public Expression constructIntegerMultiplication(IntegerMultiplication expr, Expression lhs, Expression rhs) {
 		// TODO Auto-generated method stub
 		throw new IllegalArgumentException();
 	}
 
 	@Override
-	public Term constructIntegerAddition(IntegerAddition expr, Term lhs, Term rhs) {
+	public Expression constructIntegerDivision(IntegerDivision expr, Expression lhs, Expression rhs) {
 		// TODO Auto-generated method stub
 		throw new IllegalArgumentException();
 	}
 
 	@Override
-	public Term constructIntegerSubtraction(IntegerSubtraction expr, Term lhs, Term rhs) {
+	public Expression constructIntegerRemainder(IntegerRemainder expr, Expression lhs, Expression rhs) {
 		// TODO Auto-generated method stub
 		throw new IllegalArgumentException();
 	}
 
 	@Override
-	public Term constructIntegerMultiplication(IntegerMultiplication expr, Term lhs, Term rhs) {
+	public Expression constructIntegerExponent(IntegerExponent expr, Expression lhs, Expression rhs) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public Expression constructIs(Is expr, Expression operand) {
 		// TODO Auto-generated method stub
 		throw new IllegalArgumentException();
 	}
 
 	@Override
-	public Term constructIntegerDivision(IntegerDivision expr, Term lhs, Term rhs) {
+	public Expression constructLogicalAnd(LogicalAnd expr, List<Expression> operands) {
 		// TODO Auto-generated method stub
 		throw new IllegalArgumentException();
 	}
 
 	@Override
-	public Term constructIntegerRemainder(IntegerRemainder expr, Term lhs, Term rhs) {
+	public Expression constructLogicalImplication(LogicalImplication expr, Expression lhs, Expression rhs) {
 		// TODO Auto-generated method stub
 		throw new IllegalArgumentException();
 	}
 
 	@Override
-	public Term constructIs(Is expr, Term operand) {
+	public Expression constructLogicalIff(LogicalIff expr, Expression lhs, Expression rhs) {
 		// TODO Auto-generated method stub
 		throw new IllegalArgumentException();
 	}
 
 	@Override
-	public Term constructLogicalAnd(LogicalAnd expr, List<Term> operands) {
+	public Expression constructLogicalNot(LogicalNot expr, Expression operand) {
 		// TODO Auto-generated method stub
 		throw new IllegalArgumentException();
 	}
 
 	@Override
-	public Term constructLogicalImplication(LogicalImplication expr, Term lhs, Term rhs) {
+	public Expression constructLogicalOr(LogicalOr expr, List<Expression> operands) {
 		// TODO Auto-generated method stub
 		throw new IllegalArgumentException();
 	}
 
 	@Override
-	public Term constructLogicalIff(LogicalIff expr, Term lhs, Term rhs) {
+	public Expression constructExistentialQuantifier(ExistentialQuantifier expr, List<Pair<Expression, Expression>> ranges, Expression body) {
 		// TODO Auto-generated method stub
 		throw new IllegalArgumentException();
 	}
 
 	@Override
-	public Term constructLogicalNot(LogicalNot expr, Term operand) {
+	public Expression constructUniversalQuantifier(UniversalQuantifier expr, List<Pair<Expression, Expression>> ranges, Expression body) {
 		// TODO Auto-generated method stub
 		throw new IllegalArgumentException();
 	}
 
 	@Override
-	public Term constructLogicalOr(LogicalOr expr, List<Term> operands) {
+	public Expression constructInvoke(Invoke expr, List<Expression> arguments) {
 		// TODO Auto-generated method stub
 		throw new IllegalArgumentException();
 	}
 
 	@Override
-	public Term constructExistentialQuantifier(ExistentialQuantifier expr, List<Pair<Term, Term>> ranges, Term body) {
+	public Expression constructIndirectInvoke(IndirectInvoke expr, Expression source, List<Expression> arguments) {
 		// TODO Auto-generated method stub
 		throw new IllegalArgumentException();
 	}
 
 	@Override
-	public Term constructUniversalQuantifier(UniversalQuantifier expr, List<Pair<Term, Term>> ranges, Term body) {
+	public Expression constructLambdaAccess(LambdaAccess expr) {
 		// TODO Auto-generated method stub
 		throw new IllegalArgumentException();
 	}
 
 	@Override
-	public Term constructInvoke(Invoke expr, List<Term> arguments) {
+	public Expression constructNew(New expr, Expression operand) {
+		throw new IllegalArgumentException();
+	}
+
+	@Override
+	public Expression constructNotEqual(NotEqual expr, Expression lhs, Expression rhs) {
+		return new Expression.Equals(true, lhs, rhs);
+	}
+
+	@Override
+	public Expression constructOld(Old expr, Expression operand) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public Expression constructRecordAccess(RecordAccess expr, Expression source) {
 		// TODO Auto-generated method stub
 		throw new IllegalArgumentException();
 	}
 
 	@Override
-	public Term constructIndirectInvoke(IndirectInvoke expr, Term source, List<Term> arguments) {
+	public Expression constructRecordInitialiser(RecordInitialiser expr, List<Expression> operands) {
 		// TODO Auto-generated method stub
 		throw new IllegalArgumentException();
 	}
 
 	@Override
-	public Term constructLambdaAccess(LambdaAccess expr) {
+	public Expression constructTupleInitialiser(TupleInitialiser expr, List<Expression> operands) {
 		// TODO Auto-generated method stub
 		throw new IllegalArgumentException();
 	}
 
 	@Override
-	public Term constructNew(New expr, Term operand) {
+	public Expression constructStaticVariableAccess(StaticVariableAccess expr) {
 		// TODO Auto-generated method stub
 		throw new IllegalArgumentException();
 	}
 
 	@Override
-	public Term constructNotEqual(NotEqual expr, Term lhs, Term rhs) {
+	public Expression constructVariableAccess(VariableAccess expr) {
 		// TODO Auto-generated method stub
 		throw new IllegalArgumentException();
 	}
 
 	@Override
-	public Term constructRecordAccess(RecordAccess expr, Term source) {
+	public Statement applyImplicitCoercion(wyil.lang.WyilFile.Type target, wyil.lang.WyilFile.Type source,
+			Statement expr) {
 		// TODO Auto-generated method stub
-		throw new IllegalArgumentException();
-	}
-
-	@Override
-	public Term constructRecordInitialiser(RecordInitialiser expr, List<Term> operands) {
-		// TODO Auto-generated method stub
-		throw new IllegalArgumentException();
-	}
-
-	@Override
-	public Term constructTupleInitialiser(TupleInitialiser expr, List<Term> operands) {
-		// TODO Auto-generated method stub
-		throw new IllegalArgumentException();
-	}
-
-	@Override
-	public Term constructStaticVariableAccess(StaticVariableAccess expr) {
-		// TODO Auto-generated method stub
-		throw new IllegalArgumentException();
-	}
-
-	@Override
-	public Term constructVariableAccess(VariableAccess expr) {
-		// TODO Auto-generated method stub
-		throw new IllegalArgumentException();
-	}
-
-	@Override
-	public Term applyImplicitCoercion(wyil.lang.WyilFile.Type target, wyil.lang.WyilFile.Type source, Term expr) {
-		// TODO Auto-generated method stub
-		throw new IllegalArgumentException();
+		return null;
 	}
 
 }

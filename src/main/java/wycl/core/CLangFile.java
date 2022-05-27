@@ -13,55 +13,13 @@
 // limitations under the License.
 package wycl.core;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import wyfs.lang.Content;
-import wyfs.lang.Path;
 import wycl.core.CLangFile;
-import wycl.io.CLangFilePrinter;
 
 public class CLangFile {
-	// =========================================================================
-	// Content Type
-	// =========================================================================
-
-	/**
-	 * Responsible for identifying and reading/writing WyilFiles. The normal
-	 * extension is ".wyil" for WyilFiles.
-	 */
-	public static final Content.Type<CLangFile> ContentType = new Content.Type<CLangFile>() {
-		public Path.Entry<CLangFile> accept(Path.Entry<?> e) {
-			if (e.contentType() == this) {
-				return (Path.Entry<CLangFile>) e;
-			}
-			return null;
-		}
-
-		@Override
-		public CLangFile read(Path.Entry<CLangFile> e, InputStream input) throws IOException {
-			return new CLangFile();
-		}
-
-		@Override
-		public void write(OutputStream output, CLangFile jf) throws IOException {
-			new CLangFilePrinter(output).write(jf);
-		}
-
-		@Override
-		public String toString() {
-			return "Content-Type: c";
-		}
-
-		@Override
-		public String getSuffix() {
-			return "c";
-		}
-	};
 
 	// =========================================================================
 	//
@@ -202,6 +160,48 @@ public class CLangFile {
 		public static class Skip implements Statement {
 
 		}
+
+		public static class If implements Statement {
+			private final Expression condition;
+			private final Statement trueBranch;
+			private final Statement falseBranch;
+
+			public If(Expression condition, Statement trueBranch, Statement falseBranch) {
+				this.condition = condition;
+				this.trueBranch = trueBranch;
+				this.falseBranch = falseBranch;
+			}
+
+			public Expression getCondition() {
+				return condition;
+			}
+
+			public Statement getTrueBranch() {
+				return trueBranch;
+			}
+
+			public Statement getFalseBranch() {
+				return falseBranch;
+			}
+		}
+
+		public static class While implements Statement {
+			private final Expression condition;
+			private final Statement body;
+
+			public While(Expression condition, Statement body) {
+				this.condition = condition;
+				this.body = body;
+			}
+
+			public Expression getCondition() {
+				return condition;
+			}
+
+			public Statement getBody() {
+				return body;
+			}
+		}
 	}
 
 	// =========================================================================
@@ -209,7 +209,47 @@ public class CLangFile {
 	// =========================================================================
 
 	public interface Expression extends Term {
+		public class IntConstant implements Expression {
+			private final int constant;
 
+			public IntConstant(int constant) {
+				this.constant = constant;
+			}
+
+			public int getConstant() {
+				return constant;
+			}
+		}
+
+		public class Equals implements Expression {
+			private final boolean negated;
+			private final Expression lhs;
+			private final Expression rhs;
+
+			public Equals(Expression lhs, Expression rhs) {
+				this.negated = false;
+				this.lhs = lhs;
+				this.rhs = rhs;
+			}
+
+			public Equals(boolean negated, Expression lhs, Expression rhs) {
+				this.negated = negated;
+				this.lhs = lhs;
+				this.rhs = rhs;
+			}
+
+			public boolean isNegated() {
+				return negated;
+			}
+
+			public Expression getLeftHandSide() {
+				return lhs;
+			}
+
+			public Expression getRightHandSide() {
+				return rhs;
+			}
+		}
 	}
 
 	// =========================================================================

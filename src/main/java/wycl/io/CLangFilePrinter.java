@@ -18,6 +18,7 @@ import java.io.PrintWriter;
 
 import wycl.core.CLangFile;
 import wycl.core.CLangFile.Declaration;
+import wycl.core.CLangFile.Expression;
 import wycl.core.CLangFile.Statement;
 import wyil.lang.WyilFile;
 import wyil.lang.WyilFile.Decl;
@@ -55,8 +56,14 @@ public class CLangFilePrinter {
 	private void writeStatement(int indent, Statement stmt) {
 		if(stmt instanceof Statement.Block) {
 			writeBlock(indent,(Statement.Block) stmt);
+		} else if(stmt instanceof Statement.If) {
+			writeIf(indent,(Statement.If) stmt);
 		} else if(stmt instanceof Statement.Skip) {
 			writeSkip(indent,(Statement.Skip) stmt);
+		} else if(stmt instanceof Statement.While) {
+			writeWhile(indent,(Statement.While) stmt);
+		} else {
+			throw new IllegalArgumentException();
 		}
 	}
 
@@ -68,9 +75,52 @@ public class CLangFilePrinter {
 		tab(indent);out.print("}");
 	}
 
+	private void writeIf(int indent, Statement.If stmt) {
+		tab(indent);
+		out.print("if(");
+		writeExpression(stmt.getCondition());
+		out.print(") ");
+		writeStatement(indent, stmt.getTrueBranch());
+		if(stmt.getFalseBranch() != null) {
+			writeStatement(indent, stmt.getFalseBranch());
+		}
+		out.println();
+	}
+
+	private void writeWhile(int indent, Statement.While stmt) {
+		tab(indent);
+		out.print("while(");
+		writeExpression(stmt.getCondition());
+		out.print(") ");
+		writeStatement(indent, stmt.getBody());
+		out.println();
+	}
+
 	private void writeSkip(int indent, Statement.Skip stmt) {
 		tab(indent);
 		out.println("// skip");
+	}
+
+	private void writeExpression(Expression expr) {
+		if(expr instanceof Expression.Equals) {
+			writeEquals((Expression.Equals) expr);
+		} else if(expr instanceof Expression.IntConstant) {
+			writeIntConstant((Expression.IntConstant) expr);
+		}
+	}
+
+	private void writeEquals(Expression.Equals expr) {
+		writeExpression(expr.getLeftHandSide());
+		if(expr.isNegated()) {
+			out.print(" != ");
+		} else {
+			out.print(" == ");
+		}
+		writeExpression(expr.getRightHandSide());
+	}
+
+	private void writeIntConstant(Expression.IntConstant expr) {
+		out.print(expr.getConstant());
 	}
 
 	private void tab(int indent) {
