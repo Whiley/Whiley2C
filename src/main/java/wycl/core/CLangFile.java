@@ -228,6 +228,22 @@ public class CLangFile {
 			}
 		}
 
+		public abstract class Prefix implements Expression {
+			private final Expression operand;
+
+			private Prefix(Expression operand) {
+				this.operand = operand;
+			}
+
+			public Expression getOperand() {
+				return operand;
+			}
+		}
+
+		// ======================================================
+		// Arithmetic
+		// ======================================================
+
 		public class Add extends Infix{
 			private Add(Expression lhs, Expression rhs) {
 				super(lhs,rhs);
@@ -252,6 +268,17 @@ public class CLangFile {
 			}
 		}
 
+		public class Rem extends Infix{
+			private Rem(Expression lhs, Expression rhs) {
+				super(lhs,rhs);
+			}
+		}
+
+		public class Neg extends Prefix {
+			private Neg(Expression operand) {
+				super(operand);
+			}
+		}
 		public class IntConstant implements Expression {
 			private final int constant;
 
@@ -263,6 +290,10 @@ public class CLangFile {
 				return constant;
 			}
 		}
+
+		// ======================================================
+		// Logical
+		// ======================================================
 
 		public class Equals extends Infix {
 			private Equals(Expression lhs, Expression rhs) {
@@ -297,6 +328,38 @@ public class CLangFile {
 		public class GreaterThanEqual extends Infix {
 			private GreaterThanEqual(Expression lhs, Expression rhs) {
 				super(lhs,rhs);
+			}
+		}
+
+		public class Not extends Prefix {
+			private Not(Expression operand) {
+				super(operand);
+			}
+		}
+
+		public class And extends Infix {
+			private And(Expression lhs, Expression rhs) {
+				super(lhs,rhs);
+			}
+		}
+
+		public class Or extends Infix {
+			private Or(Expression lhs, Expression rhs) {
+				super(lhs,rhs);
+			}
+		}
+
+		// ======================================================
+		// Other
+		// ======================================================
+
+		public class Var implements Expression{
+			private final String name;
+			private Var(String name) {
+				this.name = name;
+			}
+			public String getName() {
+				return name;
 			}
 		}
 	}
@@ -337,6 +400,18 @@ public class CLangFile {
 		return new Expression.GreaterThanEqual(lhs, rhs);
 	}
 
+	public static Expression AND(Expression lhs, Expression rhs) {
+		return new Expression.And(lhs, rhs);
+	}
+
+	public static Expression OR(Expression lhs, Expression rhs) {
+		return new Expression.Or(lhs, rhs);
+	}
+
+	public static Expression NOT(Expression operand) {
+		return new Expression.Not(operand);
+	}
+
 	public static Expression ADD(Expression lhs, Expression rhs) {
 		return new Expression.Add(lhs, rhs);
 	}
@@ -351,6 +426,18 @@ public class CLangFile {
 
 	public static Expression DIV(Expression lhs, Expression rhs) {
 		return new Expression.Div(lhs, rhs);
+	}
+
+	public static Expression REM(Expression lhs, Expression rhs) {
+		return new Expression.Rem(lhs, rhs);
+	}
+
+	public static Expression NEG(Expression operand) {
+		return new Expression.Neg(operand);
+	}
+
+	public static Expression VAR(String name) {
+		return new Expression.Var(name);
 	}
 }
 

@@ -18,6 +18,7 @@ import java.util.List;
 
 import wycc.util.AbstractCompilationUnit.Value;
 import wycc.util.Pair;
+import static wycl.core.CLangFile.*;
 import wycl.core.CLangFile;
 import wycl.core.CLangFile.Expression;
 import wycl.core.CLangFile.Statement;
@@ -77,7 +78,7 @@ public class CLangCompiler extends AbstractTranslator<Declaration,Statement,Expr
 	}
 
 	@Override
-	public Declaration constructType(Type d, List<Expression> invariant) {
+	public Declaration constructType(WyilFile.Decl.Type d, List<Expression> invariant) {
 		// TODO Auto-generated method stub
 		throw new IllegalArgumentException();
 	}
@@ -382,59 +383,57 @@ public class CLangCompiler extends AbstractTranslator<Declaration,Statement,Expr
 
 	@Override
 	public Expression constructEqual(Equal expr, Expression lhs, Expression rhs) {
-		return CLangFile.EQ(lhs, rhs);
+		return EQ(lhs, rhs);
 	}
 
 	@Override
 	public Expression constructIntegerLessThan(IntegerLessThan expr, Expression lhs, Expression rhs) {
-		return CLangFile.LT(lhs, rhs);
+		return LT(lhs, rhs);
 	}
 
 	@Override
 	public Expression constructIntegerLessThanOrEqual(IntegerLessThanOrEqual expr, Expression lhs, Expression rhs) {
-		return CLangFile.LTEQ(lhs, rhs);
+		return LTEQ(lhs, rhs);
 	}
 
 	@Override
 	public Expression constructIntegerGreaterThan(IntegerGreaterThan expr, Expression lhs, Expression rhs) {
-		return CLangFile.GT(lhs, rhs);
+		return GT(lhs, rhs);
 	}
 
 	@Override
 	public Expression constructIntegerGreaterThanOrEqual(IntegerGreaterThanOrEqual expr, Expression lhs, Expression rhs) {
-		return CLangFile.GTEQ(lhs, rhs);
+		return GTEQ(lhs, rhs);
 	}
 
 	@Override
 	public Expression constructIntegerNegation(IntegerNegation expr, Expression operand) {
-		// TODO Auto-generated method stub
-		throw new IllegalArgumentException();
+		return NEG(operand);
 	}
 
 	@Override
 	public Expression constructIntegerAddition(IntegerAddition expr, Expression lhs, Expression rhs) {
-		return CLangFile.ADD(lhs,rhs);
+		return ADD(lhs,rhs);
 	}
 
 	@Override
 	public Expression constructIntegerSubtraction(IntegerSubtraction expr, Expression lhs, Expression rhs) {
-		return CLangFile.SUB(lhs,rhs);
+		return SUB(lhs,rhs);
 	}
 
 	@Override
 	public Expression constructIntegerMultiplication(IntegerMultiplication expr, Expression lhs, Expression rhs) {
-		return CLangFile.MUL(lhs,rhs);
+		return MUL(lhs,rhs);
 	}
 
 	@Override
 	public Expression constructIntegerDivision(IntegerDivision expr, Expression lhs, Expression rhs) {
-		return CLangFile.DIV(lhs,rhs);
+		return DIV(lhs,rhs);
 	}
 
 	@Override
 	public Expression constructIntegerRemainder(IntegerRemainder expr, Expression lhs, Expression rhs) {
-		// TODO Auto-generated method stub
-		throw new IllegalArgumentException();
+		return REM(lhs,rhs);
 	}
 
 	@Override
@@ -451,14 +450,16 @@ public class CLangCompiler extends AbstractTranslator<Declaration,Statement,Expr
 
 	@Override
 	public Expression constructLogicalAnd(LogicalAnd expr, List<Expression> operands) {
-		// TODO Auto-generated method stub
-		throw new IllegalArgumentException();
+		Expression e = operands.get(0);
+		for(int i=1;i!=operands.size();++i) {
+			e = AND(e,operands.get(i));
+		}
+		return e;
 	}
 
 	@Override
 	public Expression constructLogicalImplication(LogicalImplication expr, Expression lhs, Expression rhs) {
-		// TODO Auto-generated method stub
-		throw new IllegalArgumentException();
+		return OR(NOT(lhs),rhs);
 	}
 
 	@Override
@@ -469,14 +470,16 @@ public class CLangCompiler extends AbstractTranslator<Declaration,Statement,Expr
 
 	@Override
 	public Expression constructLogicalNot(LogicalNot expr, Expression operand) {
-		// TODO Auto-generated method stub
-		throw new IllegalArgumentException();
+		return NOT(operand);
 	}
 
 	@Override
 	public Expression constructLogicalOr(LogicalOr expr, List<Expression> operands) {
-		// TODO Auto-generated method stub
-		throw new IllegalArgumentException();
+		Expression e = operands.get(0);
+		for(int i=1;i!=operands.size();++i) {
+			e = OR(e,operands.get(i));
+		}
+		return e;
 	}
 
 	@Override
@@ -516,7 +519,7 @@ public class CLangCompiler extends AbstractTranslator<Declaration,Statement,Expr
 
 	@Override
 	public Expression constructNotEqual(NotEqual expr, Expression lhs, Expression rhs) {
-		return CLangFile.NEQ(lhs, rhs);
+		return NEQ(lhs, rhs);
 	}
 
 	@Override
@@ -551,8 +554,8 @@ public class CLangCompiler extends AbstractTranslator<Declaration,Statement,Expr
 
 	@Override
 	public Expression constructVariableAccess(VariableAccess expr) {
-		// TODO Auto-generated method stub
-		throw new IllegalArgumentException();
+		String name = expr.getVariableDeclaration().getName().get();
+		return VAR(name);
 	}
 
 	@Override
