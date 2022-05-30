@@ -16,6 +16,7 @@ package wycl.tasks;
 import java.util.Collections;
 import java.util.List;
 
+import wycc.util.AbstractCompilationUnit.Tuple;
 import wycc.util.AbstractCompilationUnit.Value;
 import wycc.util.Pair;
 import static wycl.core.CLangFile.*;
@@ -23,7 +24,7 @@ import wycl.core.CLangFile;
 import wycl.core.CLangFile.Expression;
 import wycl.core.CLangFile.Statement;
 import wycl.core.CLangFile.Declaration;
-import wyil.util.AbstractTranslator;
+import wycl.core.CLangFile.Type;
 import wyil.lang.WyilFile;
 import wyil.lang.WyilFile.Decl;
 import wyil.lang.WyilFile.Decl.*;
@@ -32,8 +33,9 @@ import wyil.lang.WyilFile.Stmt.*;
 import wyil.util.IncrementalSubtypingEnvironment;
 import wyil.util.Subtyping;
 import wyil.util.TypeMangler;
+import wycl.util.AbstractTranslator;
 
-public class CLangCompiler extends AbstractTranslator<Declaration,Statement,Expression> {
+public class CLangCompiler extends AbstractTranslator<Declaration,Statement,Expression,Type> {
 	/**
 	 * Provides a standard mechanism for writing out type mangles.
 	 */
@@ -59,7 +61,7 @@ public class CLangCompiler extends AbstractTranslator<Declaration,Statement,Expr
 		// Translate local units
 		for (Decl.Unit unit : wf.getModule().getUnits()) {
 			for (Decl decl : unit.getDeclarations()) {
-				CLangFile.Declaration d = (CLangFile.Declaration) visitDeclaration(decl);
+				CLangFile.Declaration d = visitDeclaration(decl);
 				if (d != null) {
 					cFile.getDeclarations().add(d);
 				}
@@ -183,9 +185,15 @@ public class CLangCompiler extends AbstractTranslator<Declaration,Statement,Expr
 	}
 
 	@Override
-	public Statement constructInitialiser(Initialiser stmt, Expression initialiser) {
-		// TODO Auto-generated method stub
-		throw new IllegalArgumentException();
+	public Statement constructInitialiser(Initialiser stmt, Type type, Expression initialiser) {
+		Tuple<WyilFile.Decl.Variable> vars = stmt.getVariables();
+		// TODO: improve this!
+		if(vars.size() != 1) {
+			throw new IllegalArgumentException();
+		}
+		//
+		String name = vars.get(0).getName().get();
+		return new CLangFile.Declaration.Variable(type, name, initialiser);
 	}
 
 	@Override
@@ -557,6 +565,48 @@ public class CLangCompiler extends AbstractTranslator<Declaration,Statement,Expr
 		String name = expr.getVariableDeclaration().getName().get();
 		return VAR(name);
 	}
+
+
+	@Override
+	public Type constructArrayType(WyilFile.Type.Array type, Type element) {
+		throw new UnsupportedOperationException();
+	}
+
+	@Override
+	public Type constructBoolType(WyilFile.Type.Bool type) {
+		throw new UnsupportedOperationException();
+	}
+
+	@Override
+	public Type constructByteType(WyilFile.Type.Byte type) {
+		return INT();
+	}
+
+	@Override
+	public Type constructIntType(WyilFile.Type.Int type) {
+		return INT();
+	}
+
+	@Override
+	public Type constructRecordType(WyilFile.Type.Record type, List<Type> types) {
+		throw new UnsupportedOperationException();
+	}
+
+	@Override
+	public Type constructReferenceType(WyilFile.Type.Reference type, Type element) {
+		throw new UnsupportedOperationException();
+	}
+
+	@Override
+	public Type constructUnionType(WyilFile.Type.Union type, List<Type> element) {
+		throw new UnsupportedOperationException();
+	}
+
+	@Override
+	public Type constructVoidType(WyilFile.Type.Void type) {
+		throw new UnsupportedOperationException();
+	}
+
 
 	@Override
 	public Statement applyImplicitCoercion(wyil.lang.WyilFile.Type target, wyil.lang.WyilFile.Type source,

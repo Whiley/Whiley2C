@@ -40,9 +40,11 @@ public class CLangCompileTest implements TestStage {
 			//
 			return new Result(ignored, new Error[0]);
 		} catch (Syntactic.Exception e) {
+			e.printStackTrace();
 			TestFile.Error err = WhileyCompileTest.toError(state, e);
 			return new TestStage.Result(ignored, new TestFile.Error[] { err });
 		} catch(Throwable e) {
+			e.printStackTrace();
 			TestFile.Coordinate c = new TestFile.Coordinate(0, new TestFile.Range(0, 0));
 			return new Result(ignored, new Error(WyilFile.INTERNAL_FAILURE, Trie.fromString(unit), c));
 		}

@@ -102,7 +102,7 @@ public class CLangFile {
 				this.initialiser = initialiser;
 			}
 
-			public String getName(int ith) {
+			public String getName() {
 				return name;
 			}
 
@@ -119,16 +119,11 @@ public class CLangFile {
 			}
 		}
 
-
 		public static class Parameter extends Variable {
-
 			public Parameter(Type type, String name, Expression initialiser) {
 				super(type, name, initialiser);
 			}
-
 		}
-
-
 	}
 
 	// =========================================================================
@@ -210,6 +205,14 @@ public class CLangFile {
 
 	public interface Expression extends Term {
 
+		/**
+		 * Determine whether or not this expression requires parenthesis when used as
+		 * part of an another expression.
+		 *
+		 * @return
+		 */
+		public boolean requiresParenthesis();
+
 		public abstract class Infix implements Expression {
 			private final Expression lhs;
 			private final Expression rhs;
@@ -226,6 +229,13 @@ public class CLangFile {
 			public Expression getRightHandSide() {
 				return rhs;
 			}
+
+			public abstract String getOperatorString();
+
+			@Override
+			public boolean requiresParenthesis() {
+				return true;
+			}
 		}
 
 		public abstract class Prefix implements Expression {
@@ -238,6 +248,11 @@ public class CLangFile {
 			public Expression getOperand() {
 				return operand;
 			}
+
+			@Override
+			public boolean requiresParenthesis() {
+				return false;
+			}
 		}
 
 		// ======================================================
@@ -248,11 +263,20 @@ public class CLangFile {
 			private Add(Expression lhs, Expression rhs) {
 				super(lhs,rhs);
 			}
+
+			@Override
+			public String getOperatorString() {
+				return "+";
+			}
 		}
 
 		public class Sub extends Infix{
 			private Sub(Expression lhs, Expression rhs) {
 				super(lhs,rhs);
+			}
+			@Override
+			public String getOperatorString() {
+				return "-";
 			}
 		}
 
@@ -260,17 +284,29 @@ public class CLangFile {
 			private Div(Expression lhs, Expression rhs) {
 				super(lhs,rhs);
 			}
+			@Override
+			public String getOperatorString() {
+				return "/";
+			}
 		}
 
 		public class Mul extends Infix{
 			private Mul(Expression lhs, Expression rhs) {
 				super(lhs,rhs);
 			}
+			@Override
+			public String getOperatorString() {
+				return "*";
+			}
 		}
 
 		public class Rem extends Infix{
 			private Rem(Expression lhs, Expression rhs) {
 				super(lhs,rhs);
+			}
+			@Override
+			public String getOperatorString() {
+				return "%";
 			}
 		}
 
@@ -289,6 +325,10 @@ public class CLangFile {
 			public int getConstant() {
 				return constant;
 			}
+			@Override
+			public boolean requiresParenthesis() {
+				return false;
+			}
 		}
 
 		// ======================================================
@@ -299,11 +339,19 @@ public class CLangFile {
 			private Equals(Expression lhs, Expression rhs) {
 				super(lhs,rhs);
 			}
+			@Override
+			public String getOperatorString() {
+				return "==";
+			}
 		}
 
 		public class NotEquals extends Infix {
 			private NotEquals(Expression lhs, Expression rhs) {
 				super(lhs,rhs);
+			}
+			@Override
+			public String getOperatorString() {
+				return "!=";
 			}
 		}
 
@@ -311,11 +359,19 @@ public class CLangFile {
 			private LessThan(Expression lhs, Expression rhs) {
 				super(lhs,rhs);
 			}
+			@Override
+			public String getOperatorString() {
+				return "<";
+			}
 		}
 
 		public class LessThanEqual extends Infix {
 			private LessThanEqual(Expression lhs, Expression rhs) {
 				super(lhs,rhs);
+			}
+			@Override
+			public String getOperatorString() {
+				return "<=";
 			}
 		}
 
@@ -323,11 +379,19 @@ public class CLangFile {
 			private GreaterThan(Expression lhs, Expression rhs) {
 				super(lhs,rhs);
 			}
+			@Override
+			public String getOperatorString() {
+				return ">";
+			}
 		}
 
 		public class GreaterThanEqual extends Infix {
 			private GreaterThanEqual(Expression lhs, Expression rhs) {
 				super(lhs,rhs);
+			}
+			@Override
+			public String getOperatorString() {
+				return ">=";
 			}
 		}
 
@@ -341,11 +405,19 @@ public class CLangFile {
 			private And(Expression lhs, Expression rhs) {
 				super(lhs,rhs);
 			}
+			@Override
+			public String getOperatorString() {
+				return "&&";
+			}
 		}
 
 		public class Or extends Infix {
 			private Or(Expression lhs, Expression rhs) {
 				super(lhs,rhs);
+			}
+			@Override
+			public String getOperatorString() {
+				return "||";
 			}
 		}
 
@@ -361,6 +433,10 @@ public class CLangFile {
 			public String getName() {
 				return name;
 			}
+			@Override
+			public boolean requiresParenthesis() {
+				return false;
+			}
 		}
 	}
 
@@ -369,7 +445,11 @@ public class CLangFile {
 	// =========================================================================
 
 	public interface Type {
+		public class Int implements Type {
+			private Int() {
 
+			}
+		}
 	}
 
 	// =========================================================================
@@ -438,6 +518,10 @@ public class CLangFile {
 
 	public static Expression VAR(String name) {
 		return new Expression.Var(name);
+	}
+
+	public static Type INT() {
+		return new Type.Int();
 	}
 }
 

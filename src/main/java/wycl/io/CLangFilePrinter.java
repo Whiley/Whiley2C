@@ -20,6 +20,7 @@ import wycl.core.CLangFile;
 import wycl.core.CLangFile.Declaration;
 import wycl.core.CLangFile.Expression;
 import wycl.core.CLangFile.Statement;
+import wycl.core.CLangFile.Type;
 import wyil.lang.WyilFile;
 import wyil.lang.WyilFile.Decl;
 
@@ -53,8 +54,22 @@ public class CLangFilePrinter {
 		writeBlock(indent, d.getBody());
 	}
 
+	private void writeVariableDeclaration(int indent, Declaration.Variable d) {
+		tab(indent);
+		writeType(d.getType());
+		out.print(" ");
+		out.print(d.getName());
+		if(d.getInitialiser() != null) {
+			out.print(" = ");
+			writeExpression(d.getInitialiser());
+		}
+		out.println(";");
+	}
+
 	private void writeStatement(int indent, Statement stmt) {
-		if(stmt instanceof Statement.Block) {
+		if(stmt instanceof Declaration.Variable) {
+			writeVariableDeclaration(indent, (Declaration.Variable) stmt);
+		} else if(stmt instanceof Statement.Block) {
 			writeBlock(indent,(Statement.Block) stmt);
 		} else if(stmt instanceof Statement.If) {
 			writeIf(indent,(Statement.If) stmt);
@@ -101,50 +116,59 @@ public class CLangFilePrinter {
 		out.println("// skip");
 	}
 
+	private void writeBracketedExpression(Expression expr) {
+		if(expr.requiresParenthesis()) {
+			out.print("(");
+			writeExpression(expr);
+			out.print(")");
+		} else {
+			writeExpression(expr);
+		}
+	}
+
 	private void writeExpression(Expression expr) {
-		if(expr instanceof Expression.Equals) {
-			writeEquals((Expression.Equals) expr);
-		} else if(expr instanceof Expression.LessThan) {
-			writeLessThan((Expression.LessThan) expr);
-		} else if(expr instanceof Expression.GreaterThan) {
-			writeGreaterThan((Expression.GreaterThan) expr);
+		if(expr instanceof Expression.Infix) {
+			writeInfix((Expression.Infix) expr);
 		} else if(expr instanceof Expression.IntConstant) {
 			writeIntConstant((Expression.IntConstant) expr);
+		} else if(expr instanceof Expression.Var) {
+			writeVariableAccess((Expression.Var) expr);
+		}
+		else {
+			throw new IllegalArgumentException();
 		}
 	}
 
-	private void writeEquals(Expression.Equals expr) {
-		writeExpression(expr.getLeftHandSide());
-		if(expr.isNegated()) {
-			out.print(" != ");
-		} else {
-			out.print(" == ");
-		}
-		writeExpression(expr.getRightHandSide());
-	}
-
-	private void writeLessThan(Expression.LessThan expr) {
-		writeExpression(expr.getLeftHandSide());
-		if(expr.isStrict()) {
-			out.print(" < ");
-		} else {
-			out.print(" <= ");
-		}
-		writeExpression(expr.getRightHandSide());
-	}
-
-	private void writeGreaterThan(Expression.GreaterThan expr) {
-		writeExpression(expr.getLeftHandSide());
-		if(expr.isStrict()) {
-			out.print(" > ");
-		} else {
-			out.print(" >= ");
-		}
-		writeExpression(expr.getRightHandSide());
+	private void writeInfix(Expression.Infix expr) {
+		writeBracketedExpression(expr.getLeftHandSide());
+		out.print(" ");
+		out.print(expr.getOperatorString());
+		out.print(" ");
+		writeBracketedExpression(expr.getRightHandSide());
 	}
 
 	private void writeIntConstant(Expression.IntConstant expr) {
 		out.print(expr.getConstant());
+	}
+
+	public void writeVariableAccess(Expression.Var expr) {
+		out.print(expr.getName());
+	}
+
+	// ============================================================
+	// Types
+	// ============================================================
+
+	private void writeType(Type type) {
+		if(type instanceof Type.Int) {
+			writeTypeInt((Type.Int)type);
+		} else {
+			throw new IllegalArgumentException();
+		}
+	}
+
+	private void writeTypeInt(Type.Int type) {
+		out.print("int");
 	}
 
 	private void tab(int indent) {
