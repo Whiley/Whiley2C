@@ -27,6 +27,7 @@ import wycc.util.Trie;
 import wycl.core.CLangFile;
 import wycl.io.CLangFilePrinter;
 import wycl.tasks.CLangCompileTask;
+import wycl.util.CC;
 import wyil.lang.WyilFile;
 
 public class Main {
@@ -37,7 +38,7 @@ public class Main {
 	/**
 	 * Destination directory of Wyil files.
 	 */
-	private File jsdir = new File(".");
+	private File cdir = new File(".");
 	/**
 	 * List of source files.
 	 */
@@ -70,8 +71,8 @@ public class Main {
 		return this;
 	}
 
-	public Main setJsDir(File jsdir) {
-		this.jsdir = jsdir;
+	public Main setCDir(File jsdir) {
+		this.cdir = jsdir;
 		return this;
 	}
 
@@ -96,9 +97,9 @@ public class Main {
 		}
 		CLangFile target = task.run();
 		// Write out binary target
-		writeCLangFile(this.target, target, jsdir);
-		// Unsure how it can fail!
-		return true;
+		writeCLangFile(this.target, target, cdir);
+		// Attempt to compile the source file.
+		return compileCLangFile(this.target, cdir);
 	}
 
 	/**
@@ -122,7 +123,7 @@ public class Main {
 		Trie target = Trie.fromString((String) options.get("output"));
 		ArrayList<File> whileypath = (ArrayList<File>) options.get("whileypath");
 		// Construct Main object
-		Main main = new Main().setWyilDir(wyildir).setJsDir(jsdir).setTarget(target).setWhileyPath(whileypath);
+		Main main = new Main().setWyilDir(wyildir).setCDir(jsdir).setTarget(target).setWhileyPath(whileypath);
 		// Add source files
 		for (String s : args) {
 			main.addSource(Trie.fromString(s));
@@ -146,5 +147,13 @@ public class Main {
 			new CLangFilePrinter(fout).write(wf);
 			fout.flush();
 		}
+	}
+
+	public static boolean compileCLangFile(Trie target, File dir) {
+		File cfile = new File(dir, target.toNativeString() + ".c");
+		File ofile = new File(dir, target.toNativeString());
+		CC cc = new CC().setTarget(ofile);
+		CC.Result r = cc.run(cfile);
+		return r instanceof CC.Result.Success;
 	}
 }

@@ -35,10 +35,14 @@ public class CLangCompileTest implements TestStage {
 		// Test was expected to compile, so attempt to run the code.
 		String unit = tf.get(String.class, "main.file").orElse("main");
 		try {
-			// FIXME: enable standard configuration
-			new Main().setWyilDir(dir.toFile()).setJsDir(dir.toFile()).setTarget(path).addSource(path).run();
+			boolean r = new Main().setWyilDir(dir.toFile()).setCDir(dir.toFile()).setTarget(path).addSource(path).run();
 			//
-			return new Result(ignored, new Error[0]);
+			if(r) {
+				return new Result(ignored, new Error[0]);
+			} else {
+				TestFile.Coordinate c = new TestFile.Coordinate(0, new TestFile.Range(0, 0));
+				return new Result(ignored, new Error(WyilFile.INTERNAL_FAILURE, Trie.fromString(unit), c));
+			}
 		} catch (Syntactic.Exception e) {
 			e.printStackTrace();
 			TestFile.Error err = WhileyCompileTest.toError(state, e);
