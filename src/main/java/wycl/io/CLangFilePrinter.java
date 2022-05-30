@@ -15,6 +15,7 @@ package wycl.io;
 
 import java.io.OutputStream;
 import java.io.PrintWriter;
+import java.util.List;
 
 import wycl.core.CLangFile;
 import wycl.core.CLangFile.Declaration;
@@ -32,7 +33,6 @@ public class CLangFilePrinter {
 	}
 
 	public void write(CLangFile cf) {
-		// TODO Auto-generated method stub
 		for(Declaration d : cf.getDeclarations()) {
 			write(0,d);
 		}
@@ -41,14 +41,21 @@ public class CLangFilePrinter {
 	}
 
 	private void write(int indent, Declaration d) {
-		if (d instanceof Declaration.Method) {
-			write(indent, (Declaration.Method) d);
+		if (d instanceof Declaration.Include) {
+			writeInclude(indent, (Declaration.Include) d);
+		} else if (d instanceof Declaration.Method) {
+			writeMethod(indent, (Declaration.Method) d);
 		} else {
 			throw new IllegalArgumentException();
 		}
 	}
 
-	private void write(int indent, Declaration.Method d) {
+	private void writeInclude(int indent, Declaration.Include d) {
+		tab(indent);
+		out.println("#include <" + d.getInclude() + ">");
+	}
+
+	private void writeMethod(int indent, Declaration.Method d) {
 		tab(indent);
 		out.print("void " + d.getName() + "()");
 		writeBlock(indent, d.getBody());
@@ -69,17 +76,37 @@ public class CLangFilePrinter {
 	private void writeStatement(int indent, Statement stmt) {
 		if(stmt instanceof Declaration.Variable) {
 			writeVariableDeclaration(indent, (Declaration.Variable) stmt);
+		} else if(stmt instanceof Statement.Assign) {
+			writeAssign(indent,(Statement.Assign) stmt);
 		} else if(stmt instanceof Statement.Block) {
 			writeBlock(indent,(Statement.Block) stmt);
+		} else if(stmt instanceof Statement.Break) {
+			writeBreak(indent,(Statement.Break) stmt);
+		} else if(stmt instanceof Statement.Continue) {
+			writeContinue(indent,(Statement.Continue) stmt);
+		} else if(stmt instanceof Statement.DoWhile) {
+			writeDoWhile(indent,(Statement.DoWhile) stmt);
 		} else if(stmt instanceof Statement.If) {
 			writeIf(indent,(Statement.If) stmt);
 		} else if(stmt instanceof Statement.Skip) {
 			writeSkip(indent,(Statement.Skip) stmt);
 		} else if(stmt instanceof Statement.While) {
 			writeWhile(indent,(Statement.While) stmt);
+		} else if(stmt instanceof Expression) {
+			tab(indent);
+			writeExpression((Expression) stmt);
+			out.println(";");
 		} else {
-			throw new IllegalArgumentException();
+			throw new IllegalArgumentException("unknown statement: " + stmt.getClass().getName());
 		}
+	}
+
+	private void writeAssign(int indent, Statement.Assign stmt) {
+		tab(indent);
+		writeExpression(stmt.getLeftHandSide());
+		out.print(" = ");
+		writeExpression(stmt.getRightHandSide());
+		out.println(";");
 	}
 
 	private void writeBlock(int indent, Statement.Block block) {
@@ -89,6 +116,24 @@ public class CLangFilePrinter {
 		}
 		tab(indent);out.print("}");
 	}
+
+	private void writeBreak(int indent, Statement.Break block) {
+		tab(indent);out.println("break;");
+	}
+
+	private void writeContinue(int indent, Statement.Continue block) {
+		tab(indent);out.println("continue;");
+	}
+
+	private void writeDoWhile(int indent, Statement.DoWhile stmt) {
+		tab(indent);
+		out.print("do ");
+		writeStatement(indent, stmt.getBody());
+		out.print("while(");
+		writeExpression(stmt.getCondition());
+		out.println(");");
+	}
+
 
 	private void writeIf(int indent, Statement.If stmt) {
 		tab(indent);
@@ -131,10 +176,11 @@ public class CLangFilePrinter {
 			writeInfix((Expression.Infix) expr);
 		} else if(expr instanceof Expression.IntConstant) {
 			writeIntConstant((Expression.IntConstant) expr);
+		} else if(expr instanceof Expression.Invoke) {
+			writeInvoke((Expression.Invoke) expr);
 		} else if(expr instanceof Expression.Var) {
 			writeVariableAccess((Expression.Var) expr);
-		}
-		else {
+		} else {
 			throw new IllegalArgumentException();
 		}
 	}
@@ -149,6 +195,19 @@ public class CLangFilePrinter {
 
 	private void writeIntConstant(Expression.IntConstant expr) {
 		out.print(expr.getConstant());
+	}
+
+	private void writeInvoke(Expression.Invoke expr) {
+		List<Expression> args = expr.getArguments();
+		out.print(expr.getName());
+		out.print("(");
+		for (int i = 0; i != args.size(); ++i) {
+			if (i != 0) {
+				out.print(", ");
+			}
+			writeExpression(args.get(i));
+		}
+		out.print(")");
 	}
 
 	public void writeVariableAccess(Expression.Var expr) {

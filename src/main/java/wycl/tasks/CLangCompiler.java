@@ -13,6 +13,8 @@
 // limitations under the License.
 package wycl.tasks;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -58,12 +60,16 @@ public class CLangCompiler extends AbstractTranslator<Declaration,Statement,Expr
 	}
 
 	public void visitModule(WyilFile wf) {
+		List<Declaration> decls = cFile.getDeclarations();
+		// Add includes
+		decls.add(new Declaration.Include("stdio.h"));
+		decls.add(new Declaration.Include("assert.h"));
 		// Translate local units
 		for (Decl.Unit unit : wf.getModule().getUnits()) {
 			for (Decl decl : unit.getDeclarations()) {
 				CLangFile.Declaration d = visitDeclaration(decl);
 				if (d != null) {
-					cFile.getDeclarations().add(d);
+					decls.add(d);
 				}
 			}
 		}
@@ -75,8 +81,7 @@ public class CLangCompiler extends AbstractTranslator<Declaration,Statement,Expr
 
 	@Override
 	public Declaration constructImport(Import d) {
-		// TODO Auto-generated method stub
-		throw new IllegalArgumentException();
+		return null;
 	}
 
 	@Override
@@ -92,9 +97,8 @@ public class CLangCompiler extends AbstractTranslator<Declaration,Statement,Expr
 	}
 
 	@Override
-	public Declaration constructProperty(Property decl, Statement body) {
-		// TODO Auto-generated method stub
-		throw new IllegalArgumentException();
+	public Declaration constructProperty(Property d, Statement body) {
+		return new Declaration.Method(d.getName().get(), Collections.EMPTY_LIST, (Statement.Block) body);
 	}
 
 	@Override
@@ -105,8 +109,7 @@ public class CLangCompiler extends AbstractTranslator<Declaration,Statement,Expr
 
 	@Override
 	public Declaration constructFunction(Function d, List<Expression> precondition, List<Expression> postcondition, Statement body) {
-		// TODO Auto-generated method stub
-		throw new IllegalArgumentException();
+		return new Declaration.Method(d.getName().get(), Collections.EMPTY_LIST, (Statement.Block) body);
 	}
 
 	@Override
@@ -122,20 +125,31 @@ public class CLangCompiler extends AbstractTranslator<Declaration,Statement,Expr
 
 	@Override
 	public Statement constructAssert(Assert stmt, Expression condition) {
-		// TODO Auto-generated method stub
-		throw new IllegalArgumentException();
+		return INVOKE("assert", Arrays.asList(condition));
 	}
 
 	@Override
 	public Statement constructAssign(Assign stmt, List<Expression> lvals, List<Expression> rvals) {
-		// TODO Auto-generated method stub
-		throw new IllegalArgumentException();
+		if(lvals.size() != rvals.size()) {
+			// TODO: support destructuring assignments.
+			throw new IllegalArgumentException();
+		}
+		ArrayList<Statement> steps = new ArrayList<>();
+		for(int i=0;i!=lvals.size();++i) {
+			Expression lval = lvals.get(i);
+			Expression rval = rvals.get(i);
+			steps.add(ASSIGN(lval,rval));
+		}
+		if(steps.size() == 1) {
+			return steps.get(0);
+		} else {
+			return new Statement.Block(steps);
+		}
 	}
 
 	@Override
 	public Statement constructAssume(Assume stmt, Expression condition) {
-		// TODO Auto-generated method stub
-		throw new IllegalArgumentException();
+		return INVOKE("assert", Arrays.asList(condition));
 	}
 
 	@Override
@@ -145,14 +159,12 @@ public class CLangCompiler extends AbstractTranslator<Declaration,Statement,Expr
 
 	@Override
 	public Statement constructBreak(Break stmt) {
-		// TODO Auto-generated method stub
-		throw new IllegalArgumentException();
+		return BREAK();
 	}
 
 	@Override
 	public Statement constructContinue(Continue stmt) {
-		// TODO Auto-generated method stub
-		throw new IllegalArgumentException();
+		return CONTINUE();
 	}
 
 	@Override
@@ -163,14 +175,13 @@ public class CLangCompiler extends AbstractTranslator<Declaration,Statement,Expr
 
 	@Override
 	public Statement constructDoWhile(DoWhile stmt, Statement body, Expression condition, List<Expression> invariant) {
-		// TODO Auto-generated method stub
-		throw new IllegalArgumentException();
+		return DOWHILE(condition, body);
 	}
 
 	@Override
 	public Statement constructFail(Fail stmt) {
-		// TODO Auto-generated method stub
-		throw new IllegalArgumentException();
+		// Force an assertion failure.
+		return INVOKE("assert", Arrays.asList(CONST(0)));
 	}
 
 	@Override
@@ -181,7 +192,7 @@ public class CLangCompiler extends AbstractTranslator<Declaration,Statement,Expr
 
 	@Override
 	public Statement constructIfElse(IfElse stmt, Expression condition, Statement trueBranch, Statement falseBranch) {
-		return new Statement.If(condition, trueBranch, falseBranch);
+		return IF(condition, trueBranch, falseBranch);
 	}
 
 	@Override
@@ -216,8 +227,7 @@ public class CLangCompiler extends AbstractTranslator<Declaration,Statement,Expr
 
 	@Override
 	public Statement constructReturn(Return stmt, Expression ret) {
-		// TODO Auto-generated method stub
-		throw new IllegalArgumentException();
+		return RETURN(ret);
 	}
 
 	@Override
@@ -233,7 +243,7 @@ public class CLangCompiler extends AbstractTranslator<Declaration,Statement,Expr
 
 	@Override
 	public Statement constructWhile(While stmt, Expression condition, List<Expression> invariant, Statement body) {
-		return new Statement.While(condition, body);
+		return WHILE(condition, body);
 	}
 
 	@Override
@@ -274,8 +284,8 @@ public class CLangCompiler extends AbstractTranslator<Declaration,Statement,Expr
 
 	@Override
 	public Expression constructVariableAccessLVal(VariableAccess expr) {
-		// TODO Auto-generated method stub
-		throw new IllegalArgumentException();
+		String name = expr.getVariableDeclaration().getName().get();
+		return VAR(name);
 	}
 
 	@Override
@@ -363,14 +373,14 @@ public class CLangCompiler extends AbstractTranslator<Declaration,Statement,Expr
 		if(v instanceof Value.Bool) {
 			Value.Bool b = (Value.Bool) v;
 			if(b.get()) {
-				return new Expression.IntConstant(1);
+				return CONST(1);
 			} else {
-				return new Expression.IntConstant(0);
+				return CONST(0);
 			}
 		} else if(v instanceof Value.Int) {
 			Value.Int b = (Value.Int) v;
 			// TODO: clearly a hack for now.
-			return new Expression.IntConstant(b.get().intValueExact());
+			return CONST(b.get().intValueExact());
 		} else {
 			// TODO Auto-generated method stub
 			throw new IllegalArgumentException();

@@ -72,6 +72,18 @@ public class CLangFile {
 			}
 		}
 
+		public static class Include implements Declaration {
+			private final String include;
+
+			public Include(String include) {
+				this.include = include;
+			}
+
+			public String getInclude() {
+				return include;
+			}
+		}
+
 		public static class Method extends Abstract implements Declaration {
 			private final List<Parameter> parameters;
 			private final Statement.Block body;
@@ -91,19 +103,14 @@ public class CLangFile {
 			}
 		}
 
-		public static class Variable implements Declaration, Statement {
+		public static class Variable extends Abstract implements Statement {
 			private final Type type;
-			private final String name;
 			private final Expression initialiser;
 
 			public Variable(Type type, String name, Expression initialiser) {
+				super(name);
 				this.type = type;
-				this.name = name;
 				this.initialiser = initialiser;
-			}
-
-			public String getName() {
-				return name;
 			}
 
 			public Type getType() {
@@ -132,6 +139,27 @@ public class CLangFile {
 
 	public interface Statement extends Term {
 
+		public static class Assign implements Statement {
+			private final Expression lhs;
+			private final Expression rhs;
+			private Assign(Expression lhs, Expression rhs) {
+				this.lhs = lhs;
+				this.rhs = rhs;
+			}
+
+			public Expression getLeftHandSide() {
+				return lhs;
+			}
+
+			public Expression getRightHandSide() {
+				return rhs;
+			}
+		}
+
+		public static class Continue implements Statement {
+			private Continue() {}
+		}
+
 		public static class Block implements Statement {
 			private List<Statement> terms;
 
@@ -152,6 +180,28 @@ public class CLangFile {
 			}
 		}
 
+		public static class Break implements Statement {
+			private Break() {}
+		}
+
+		public static class DoWhile implements Statement {
+			private final Expression condition;
+			private final Statement body;
+
+			private DoWhile(Expression condition, Statement body) {
+				this.condition = condition;
+				this.body = body;
+			}
+
+			public Expression getCondition() {
+				return condition;
+			}
+
+			public Statement getBody() {
+				return body;
+			}
+		}
+
 		public static class Skip implements Statement {
 
 		}
@@ -161,7 +211,7 @@ public class CLangFile {
 			private final Statement trueBranch;
 			private final Statement falseBranch;
 
-			public If(Expression condition, Statement trueBranch, Statement falseBranch) {
+			private If(Expression condition, Statement trueBranch, Statement falseBranch) {
 				this.condition = condition;
 				this.trueBranch = trueBranch;
 				this.falseBranch = falseBranch;
@@ -184,7 +234,7 @@ public class CLangFile {
 			private final Expression condition;
 			private final Statement body;
 
-			public While(Expression condition, Statement body) {
+			private While(Expression condition, Statement body) {
 				this.condition = condition;
 				this.body = body;
 			}
@@ -197,13 +247,25 @@ public class CLangFile {
 				return body;
 			}
 		}
+
+		public static class Return implements Statement {
+			private final Expression operand;
+
+			private Return(Expression operand) {
+				this.operand = operand;
+			}
+
+			public Expression getOperand() {
+				return operand;
+			}
+		}
 	}
 
 	// =========================================================================
 	// Expressions
 	// =========================================================================
 
-	public interface Expression extends Term {
+	public interface Expression extends Statement {
 
 		/**
 		 * Determine whether or not this expression requires parenthesis when used as
@@ -318,13 +380,36 @@ public class CLangFile {
 		public class IntConstant implements Expression {
 			private final int constant;
 
-			public IntConstant(int constant) {
+			private IntConstant(int constant) {
 				this.constant = constant;
 			}
 
 			public int getConstant() {
 				return constant;
 			}
+			@Override
+			public boolean requiresParenthesis() {
+				return false;
+			}
+		}
+
+		public class Invoke implements Expression {
+			private final String name;
+			private final List<Expression> arguments;
+
+			private Invoke(String name, List<Expression> arguments) {
+				this.name = name;
+				this.arguments = arguments;
+			}
+
+			public String getName() {
+				return name;
+			}
+
+			public List<Expression> getArguments() {
+				return arguments;
+			}
+
 			@Override
 			public boolean requiresParenthesis() {
 				return false;
@@ -453,8 +538,44 @@ public class CLangFile {
 	}
 
 	// =========================================================================
-	// Constructors
+	// Statement Constructors
 	// =========================================================================
+
+	public static Statement ASSIGN(Expression lhs, Expression rhs) {
+		return new Statement.Assign(lhs,rhs);
+	}
+
+	public static Statement CONTINUE() {
+		return new Statement.Continue();
+	}
+
+	public static Statement BREAK() {
+		return new Statement.Break();
+	}
+
+	public static Statement IF(Expression cond, Statement trueBranch, Statement falseBranch) {
+		return new Statement.If(cond, trueBranch, falseBranch);
+	}
+
+	public static Statement WHILE(Expression cond, Statement body) {
+		return new Statement.While(cond, body);
+	}
+
+	public static Statement DOWHILE(Expression cond, Statement body) {
+		return new Statement.DoWhile(cond, body);
+	}
+
+	public static Statement RETURN(Expression operand) {
+		return new Statement.Return(operand);
+	}
+
+	// =========================================================================
+	// Expression Constructors
+	// =========================================================================
+
+	public static Expression CONST(int value) {
+		return new Expression.IntConstant(value);
+	}
 
 	public static Expression EQ(Expression lhs, Expression rhs) {
 		return new Expression.Equals(lhs, rhs);
@@ -514,6 +635,10 @@ public class CLangFile {
 
 	public static Expression NEG(Expression operand) {
 		return new Expression.Neg(operand);
+	}
+
+	public static Expression INVOKE(String name, List<Expression> arguments) {
+		return new Expression.Invoke(name, arguments);
 	}
 
 	public static Expression VAR(String name) {

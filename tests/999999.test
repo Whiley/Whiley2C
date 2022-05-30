@@ -1,7 +1,7 @@
 ====
 >>> main.whiley
 public export method main():
-   int x = 1
-   if (x+1) <= 0:
-      skip
+   int x
+   x = 1
+   int y = 2
 ---
