@@ -210,7 +210,7 @@ public class CLangCompiler extends AbstractTranslator<Declaration,Statement,Expr
 	@Override
 	public Statement constructFail(Fail stmt) {
 		// Force an assertion failure.
-		return INVOKE("assert", Arrays.asList(CONST(false)));
+		return INVOKE("assert", Arrays.asList(BOOL_CONST(false)));
 	}
 
 	@Override
@@ -222,7 +222,7 @@ public class CLangCompiler extends AbstractTranslator<Declaration,Statement,Expr
 		// FIXME: there may be an inconsistency here, since we probably should be
 		// evaluating the range before the loop.
 		Expression condition = LT(var, range.second());
-		Statement increment = ASSIGN(var, ADD(var, CONST(1)));
+		Statement increment = ASSIGN(var, ADD(var, INT_CONST(1)));
 		return FOR(initialiser, condition, increment, body);
 	}
 
@@ -367,14 +367,21 @@ public class CLangCompiler extends AbstractTranslator<Declaration,Statement,Expr
 
 	@Override
 	public Expression constructBitwiseAnd(BitwiseAnd expr, List<Expression> operands) {
-		// TODO Auto-generated method stub
-		throw new IllegalArgumentException();
+		Expression e = operands.get(0);
+		for(int i=1;i!=operands.size();++i) {
+			e = BIT_AND(e,operands.get(i));
+		}
+		return e;
+
 	}
 
 	@Override
 	public Expression constructBitwiseOr(BitwiseOr expr, List<Expression> operands) {
-		// TODO Auto-generated method stub
-		throw new IllegalArgumentException();
+		Expression e = operands.get(0);
+		for(int i=1;i!=operands.size();++i) {
+			e = BIT_OR(e,operands.get(i));
+		}
+		return e;
 	}
 
 	@Override
@@ -385,14 +392,12 @@ public class CLangCompiler extends AbstractTranslator<Declaration,Statement,Expr
 
 	@Override
 	public Expression constructBitwiseShiftLeft(BitwiseShiftLeft expr, Expression lhs, Expression rhs) {
-		// TODO Auto-generated method stub
-		throw new IllegalArgumentException();
+		return SHL(lhs,rhs);
 	}
 
 	@Override
 	public Expression constructBitwiseShiftRight(BitwiseShiftRight expr, Expression lhs, Expression rhs) {
-		// TODO Auto-generated method stub
-		throw new IllegalArgumentException();
+		return SHR(lhs,rhs);
 	}
 
 	@Override
@@ -407,11 +412,14 @@ public class CLangCompiler extends AbstractTranslator<Declaration,Statement,Expr
 		//
 		if(v instanceof Value.Bool) {
 			Value.Bool b = (Value.Bool) v;
-			return CONST(b.get());
+			return BOOL_CONST(b.get());
+		} else if(v instanceof Value.Byte) {
+			Value.Byte b = (Value.Byte) v;
+			return HEX_CONST(b.get() & 0xFF);
 		} else if(v instanceof Value.Int) {
 			Value.Int b = (Value.Int) v;
 			// TODO: clearly a hack for now.
-			return CONST(b.get().intValueExact());
+			return INT_CONST(b.get().intValueExact());
 		} else {
 			// TODO Auto-generated method stub
 			throw new IllegalArgumentException();
@@ -425,8 +433,8 @@ public class CLangCompiler extends AbstractTranslator<Declaration,Statement,Expr
 
 	@Override
 	public Expression constructFieldDereference(FieldDereference expr, Expression operand) {
-		// TODO Auto-generated method stub
-		throw new IllegalArgumentException();
+		String field = expr.getField().get();
+		return FIELD_DEREFERENCE(operand, field);
 	}
 
 	@Override

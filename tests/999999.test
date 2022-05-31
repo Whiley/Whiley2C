@@ -1,5 +1,8 @@
 ====
 >>> main.whiley
+type Rec is {int f}
+
 public export method main():
-   byte b
+   byte b = 0b1110
+   byte b2 = b << 1
 ---

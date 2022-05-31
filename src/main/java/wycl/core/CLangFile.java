@@ -470,10 +470,16 @@ public class CLangFile {
 		}
 
 		public class IntConstant implements Expression {
+			private final boolean hex;
 			private final int constant;
 
-			private IntConstant(int constant) {
+			private IntConstant(boolean hex, int constant) {
+				this.hex = hex;
 				this.constant = constant;
+			}
+
+			public boolean inHex() {
+				return hex;
 			}
 
 			public int getConstant() {
@@ -608,6 +614,54 @@ public class CLangFile {
 		}
 
 		// ======================================================
+		// Bitwise
+		// ======================================================
+
+		public class BitwiseAnd extends Infix {
+			private BitwiseAnd(Expression lhs, Expression rhs) {
+				super(lhs, rhs);
+			}
+
+			@Override
+			public String getOperatorString() {
+				return "&";
+			}
+		}
+
+		public class BitwiseOr extends Infix {
+			private BitwiseOr(Expression lhs, Expression rhs) {
+				super(lhs, rhs);
+			}
+
+			@Override
+			public String getOperatorString() {
+				return "|";
+			}
+		}
+
+		public class ShiftLeft extends Infix {
+			private ShiftLeft(Expression lhs, Expression rhs) {
+				super(lhs, rhs);
+			}
+
+			@Override
+			public String getOperatorString() {
+				return "<<";
+			}
+		}
+
+		public class ShiftRight extends Infix {
+			private ShiftRight(Expression lhs, Expression rhs) {
+				super(lhs, rhs);
+			}
+
+			@Override
+			public String getOperatorString() {
+				return ">>";
+			}
+		}
+
+		// ======================================================
 		// Other
 		// ======================================================
 
@@ -637,6 +691,17 @@ public class CLangFile {
 		public class Dereference extends Prefix {
 			public Dereference(Expression source) {
 				super(source);
+			}
+		}
+
+		public class FieldDereference extends Prefix {
+			private final String field;
+			public FieldDereference(Expression source, String field) {
+				super(source);
+				this.field = field;
+			}
+			public String getField() {
+				return field;
 			}
 		}
 
@@ -825,12 +890,32 @@ public class CLangFile {
 		return new Expression.ArrayAccess(source, index);
 	}
 
-	public static Expression CONST(boolean value) {
+	public static Expression BOOL_CONST(boolean value) {
 		return new Expression.BoolConstant(value);
 	}
 
-	public static Expression CONST(int value) {
-		return new Expression.IntConstant(value);
+	public static Expression BIT_AND(Expression lhs, Expression rhs) {
+		return new Expression.BitwiseAnd(lhs, rhs);
+	}
+
+	public static Expression BIT_OR(Expression lhs, Expression rhs) {
+		return new Expression.BitwiseOr(lhs, rhs);
+	}
+
+	public static Expression SHL(Expression lhs, Expression rhs) {
+		return new Expression.ShiftLeft(lhs, rhs);
+	}
+
+	public static Expression SHR(Expression lhs, Expression rhs) {
+		return new Expression.ShiftRight(lhs, rhs);
+	}
+
+	public static Expression INT_CONST(int value) {
+		return new Expression.IntConstant(false,value);
+	}
+
+	public static Expression HEX_CONST(int value) {
+		return new Expression.IntConstant(true,value);
 	}
 
 	public static Expression DEREFERENCE(Expression source) {
@@ -843,6 +928,11 @@ public class CLangFile {
 
 	public static Expression FIELD_ACCESS(Expression source, String field) {
 		return new Expression.FieldAccess(source, field);
+	}
+
+
+	public static Expression FIELD_DEREFERENCE(Expression source, String field) {
+		return new Expression.FieldDereference(source, field);
 	}
 
 	public static Expression INVOKE(String name, List<Expression> arguments) {

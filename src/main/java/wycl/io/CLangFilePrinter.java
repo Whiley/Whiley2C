@@ -224,6 +224,8 @@ public class CLangFilePrinter {
 			writeBoolConstant((Expression.BoolConstant) expr);
 		} else if(expr instanceof Expression.FieldAccess) {
 			writeFieldAccess((Expression.FieldAccess) expr);
+		} else if(expr instanceof Expression.FieldDereference) {
+			writeFieldDereference((Expression.FieldDereference) expr);
 		} else if(expr instanceof Expression.Infix) {
 			writeInfix((Expression.Infix) expr);
 		} else if(expr instanceof Expression.IntConstant) {
@@ -256,6 +258,12 @@ public class CLangFilePrinter {
 		out.print(expr.getField());
 	}
 
+	private void writeFieldDereference(Expression.FieldDereference expr) {
+		writeBracketedExpression(expr.getOperand());
+		out.print("->");
+		out.print(expr.getField());
+	}
+
 	private void writeInfix(Expression.Infix expr) {
 		writeBracketedExpression(expr.getLeftHandSide());
 		out.print(" ");
@@ -265,7 +273,12 @@ public class CLangFilePrinter {
 	}
 
 	private void writeIntConstant(Expression.IntConstant expr) {
-		out.print(expr.getConstant());
+		if(expr.inHex()) {
+			out.print("0x");
+			out.print(Integer.toHexString(expr.getConstant()));
+		} else {
+			out.print(expr.getConstant());
+		}
 	}
 
 	private void writeInvoke(Expression.Invoke expr) {
