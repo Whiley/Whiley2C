@@ -24,6 +24,7 @@ import wycl.core.CLangFile.Statement;
 import wycl.core.CLangFile.Type;
 import wyil.lang.WyilFile;
 import wyil.lang.WyilFile.Decl;
+import wyil.lang.WyilFile.Stmt;
 
 public class CLangFilePrinter {
 	private final PrintWriter out;
@@ -62,7 +63,6 @@ public class CLangFilePrinter {
 	}
 
 	private void writeVariableDeclaration(int indent, Declaration.Variable d) {
-		tab(indent);
 		writeType(d.getType());
 		out.print(" ");
 		out.print(d.getName());
@@ -70,10 +70,19 @@ public class CLangFilePrinter {
 			out.print(" = ");
 			writeExpression(d.getInitialiser());
 		}
-		out.println(";");
 	}
 
 	private void writeStatement(int indent, Statement stmt) {
+		tab(indent);
+		writeInternalStatement(indent,stmt);
+		if(stmt instanceof Statement.Block || stmt instanceof Statement.For || stmt instanceof Statement.If || stmt instanceof Statement.While ) {
+			out.println();
+		} else {
+			out.println(";");
+		}
+	}
+
+	private void writeInternalStatement(int indent, Statement stmt) {
 		if(stmt instanceof Declaration.Variable) {
 			writeVariableDeclaration(indent, (Declaration.Variable) stmt);
 		} else if(stmt instanceof Statement.Assign) {
@@ -86,31 +95,31 @@ public class CLangFilePrinter {
 			writeContinue(indent,(Statement.Continue) stmt);
 		} else if(stmt instanceof Statement.DoWhile) {
 			writeDoWhile(indent,(Statement.DoWhile) stmt);
+		} else if(stmt instanceof Statement.For) {
+			writeFor(indent,(Statement.For) stmt);
 		} else if(stmt instanceof Statement.If) {
 			writeIf(indent,(Statement.If) stmt);
+		} else if(stmt instanceof Statement.Return) {
+			writeReturn(indent,(Statement.Return) stmt);
 		} else if(stmt instanceof Statement.Skip) {
 			writeSkip(indent,(Statement.Skip) stmt);
 		} else if(stmt instanceof Statement.While) {
 			writeWhile(indent,(Statement.While) stmt);
 		} else if(stmt instanceof Expression) {
-			tab(indent);
 			writeExpression((Expression) stmt);
-			out.println(";");
 		} else {
 			throw new IllegalArgumentException("unknown statement: " + stmt.getClass().getName());
 		}
 	}
 
 	private void writeAssign(int indent, Statement.Assign stmt) {
-		tab(indent);
 		writeExpression(stmt.getLeftHandSide());
 		out.print(" = ");
 		writeExpression(stmt.getRightHandSide());
-		out.println(";");
 	}
 
 	private void writeBlock(int indent, Statement.Block block) {
-		out.println(" {");
+		out.println("{");
 		for(Statement stmt : block.getTerms()) {
 			writeStatement(indent+1,stmt);
 		}
@@ -118,47 +127,60 @@ public class CLangFilePrinter {
 	}
 
 	private void writeBreak(int indent, Statement.Break block) {
-		tab(indent);out.println("break;");
+		out.print("break");
 	}
 
 	private void writeContinue(int indent, Statement.Continue block) {
-		tab(indent);out.println("continue;");
+		out.print("continue");
 	}
 
 	private void writeDoWhile(int indent, Statement.DoWhile stmt) {
-		tab(indent);
 		out.print("do ");
 		writeStatement(indent, stmt.getBody());
 		out.print("while(");
 		writeExpression(stmt.getCondition());
-		out.println(");");
+		out.print(")");
 	}
 
+	private void writeFor(int indent, Statement.For stmt) {
+		out.print("for(");
+		writeInternalStatement(0,stmt.getInitialiser());
+		out.print("; ");
+		writeExpression(stmt.getCondition());
+		out.print("; ");
+		writeInternalStatement(0, stmt.getIncrement());
+		out.print(") ");
+		writeInternalStatement(indent, stmt.getBody());
+	}
 
 	private void writeIf(int indent, Statement.If stmt) {
-		tab(indent);
 		out.print("if(");
 		writeExpression(stmt.getCondition());
 		out.print(") ");
-		writeStatement(indent, stmt.getTrueBranch());
+		writeInternalStatement(indent, stmt.getTrueBranch());
 		if(stmt.getFalseBranch() != null) {
-			writeStatement(indent, stmt.getFalseBranch());
+			out.print(" else ");
+			writeInternalStatement(indent, stmt.getFalseBranch());
 		}
-		out.println();
+	}
+
+	private void writeReturn(int indent, Statement.Return stmt) {
+		out.print("return");
+		if(stmt.getOperand() != null) {
+			out.print(" ");
+			writeExpression(stmt.getOperand());
+		}
 	}
 
 	private void writeWhile(int indent, Statement.While stmt) {
-		tab(indent);
 		out.print("while(");
 		writeExpression(stmt.getCondition());
 		out.print(") ");
 		writeStatement(indent, stmt.getBody());
-		out.println();
 	}
 
 	private void writeSkip(int indent, Statement.Skip stmt) {
-		tab(indent);
-		out.println("// skip");
+		out.print("/* skip */");
 	}
 
 	private void writeBracketedExpression(Expression expr) {

@@ -202,6 +202,36 @@ public class CLangFile {
 			}
 		}
 
+		public static class For implements Statement {
+			private final Statement initialiser;
+			private final Expression condition;
+			private final Statement increment;
+			private final Statement body;
+
+			private For(Statement initialiser, Expression condition, Statement increment, Statement body) {
+				this.initialiser = initialiser;
+				this.condition = condition;
+				this.increment = increment;
+				this.body = body;
+			}
+
+			public Statement getInitialiser() {
+				return initialiser;
+			}
+
+			public Expression getCondition() {
+				return condition;
+			}
+
+			public Statement getIncrement() {
+				return increment;
+			}
+
+			public Statement getBody() {
+				return body;
+			}
+		}
+
 		public static class Skip implements Statement {
 
 		}
@@ -551,6 +581,10 @@ public class CLangFile {
 
 	public static Statement BREAK() {
 		return new Statement.Break();
+	}
+
+	public static Statement FOR(Statement initialiser, Expression cond, Statement increment, Statement body) {
+		return new Statement.For(initialiser, cond, increment, body);
 	}
 
 	public static Statement IF(Expression cond, Statement trueBranch, Statement falseBranch) {

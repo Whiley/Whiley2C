@@ -185,9 +185,16 @@ public class CLangCompiler extends AbstractTranslator<Declaration,Statement,Expr
 	}
 
 	@Override
-	public Statement constructFor(For stmt, Pair<Expression, Expression> range, List<Expression> invariant, Statement body) {
-		// TODO Auto-generated method stub
-		throw new IllegalArgumentException();
+	public Statement constructFor(For stmt, Pair<Expression, Expression> range, List<Expression> invariant,
+			Statement body) {
+		String name = stmt.getVariable().getName().get();
+		Expression var = VAR(name);
+		Statement initialiser = new Declaration.Variable(INT(), name, range.first());
+		// FIXME: there may be an inconsistency here, since we probably should be
+		// evaluating the range before the loop.
+		Expression condition = LT(var, range.second());
+		Statement increment = ASSIGN(var, ADD(var, CONST(1)));
+		return FOR(initialiser, condition, increment, body);
 	}
 
 	@Override
