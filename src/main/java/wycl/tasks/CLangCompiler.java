@@ -63,6 +63,8 @@ public class CLangCompiler extends AbstractTranslator<Declaration,Statement,Expr
 		List<Declaration> decls = cFile.getDeclarations();
 		// Add includes
 		decls.add(new Declaration.Include("stdio.h"));
+		decls.add(new Declaration.Include("stdbool.h"));
+		decls.add(new Declaration.Include("stdint.h"));
 		decls.add(new Declaration.Include("assert.h"));
 		// Translate local units
 		for (Decl.Unit unit : wf.getModule().getUnits()) {
@@ -85,9 +87,9 @@ public class CLangCompiler extends AbstractTranslator<Declaration,Statement,Expr
 	}
 
 	@Override
-	public Declaration constructType(WyilFile.Decl.Type d, List<Expression> invariant) {
-		// TODO Auto-generated method stub
-		throw new IllegalArgumentException();
+	public Declaration constructType(WyilFile.Decl.Type d, List<Expression> invariant, Type type) {
+		String name = d.getName().get();
+		return TYPEDEF(name,type);
 	}
 
 	@Override
@@ -98,7 +100,16 @@ public class CLangCompiler extends AbstractTranslator<Declaration,Statement,Expr
 
 	@Override
 	public Declaration constructProperty(Property d, Statement body) {
-		return new Declaration.Method(d.getName().get(), Collections.EMPTY_LIST, (Statement.Block) body);
+		ArrayList<Declaration.Parameter> params = new ArrayList<>();
+		// Translate return
+		Type returnType = visitType(d.getType().getReturn());
+		// Translate parameters
+		for(Decl.Variable v : d.getParameters()) {
+			Type type = visitType(v.getType());
+			String name = v.getName().get();
+			params.add(new Declaration.Parameter(type,name));
+		}
+		return new Declaration.Method(returnType, d.getName().get(), params, (Statement.Block) body);
 	}
 
 	@Override
@@ -109,12 +120,30 @@ public class CLangCompiler extends AbstractTranslator<Declaration,Statement,Expr
 
 	@Override
 	public Declaration constructFunction(Function d, List<Expression> precondition, List<Expression> postcondition, Statement body) {
-		return new Declaration.Method(d.getName().get(), Collections.EMPTY_LIST, (Statement.Block) body);
+		ArrayList<Declaration.Parameter> params = new ArrayList<>();
+		// Translate return
+		Type returnType = visitType(d.getType().getReturn());
+		// Translate parameters
+		for(Decl.Variable v : d.getParameters()) {
+			Type type = visitType(v.getType());
+			String name = v.getName().get();
+			params.add(new Declaration.Parameter(type,name));
+		}
+		return new Declaration.Method(returnType, d.getName().get(), params, (Statement.Block) body);
 	}
 
 	@Override
 	public Declaration constructMethod(Method d, List<Expression> precondition, List<Expression> postcondition, Statement body) {
-		return new Declaration.Method(d.getName().get(), Collections.EMPTY_LIST, (Statement.Block) body);
+		ArrayList<Declaration.Parameter> params = new ArrayList<>();
+		// Translate return
+		Type returnType = visitType(d.getType().getReturn());
+		// Translate parameters
+		for(Decl.Variable v : d.getParameters()) {
+			Type type = visitType(v.getType());
+			String name = v.getName().get();
+			params.add(new Declaration.Parameter(type,name));
+		}
+		return new Declaration.Method(returnType, d.getName().get(), params, (Statement.Block) body);
 	}
 
 	@Override
@@ -181,7 +210,7 @@ public class CLangCompiler extends AbstractTranslator<Declaration,Statement,Expr
 	@Override
 	public Statement constructFail(Fail stmt) {
 		// Force an assertion failure.
-		return INVOKE("assert", Arrays.asList(CONST(0)));
+		return INVOKE("assert", Arrays.asList(CONST(false)));
 	}
 
 	@Override
@@ -273,14 +302,14 @@ public class CLangCompiler extends AbstractTranslator<Declaration,Statement,Expr
 
 	@Override
 	public Expression constructRecordAccessLVal(RecordAccess expr, Expression source) {
-		// TODO Auto-generated method stub
-		throw new IllegalArgumentException();
+		String field = expr.getField().get();
+		return FIELD_ACCESS(source,field);
 	}
 
 	@Override
 	public Expression constructRecordUpdate(RecordUpdate expr, Expression source, Expression value) {
 		// TODO Auto-generated method stub
-		return null;
+		throw new IllegalArgumentException();
 	}
 
 	@Override
@@ -298,13 +327,12 @@ public class CLangCompiler extends AbstractTranslator<Declaration,Statement,Expr
 	@Override
 	public Expression constructStaticVariableAccessLVal(StaticVariableAccess expr) {
 		// TODO Auto-generated method stub
-		return null;
+		throw new IllegalArgumentException();
 	}
 
 	@Override
 	public Expression constructArrayAccess(ArrayAccess expr, Expression source, Expression index) {
-		// TODO Auto-generated method stub
-		throw new IllegalArgumentException();
+		return ARRAY_ACCESS(source,index);
 	}
 
 	@Override
@@ -379,11 +407,7 @@ public class CLangCompiler extends AbstractTranslator<Declaration,Statement,Expr
 		//
 		if(v instanceof Value.Bool) {
 			Value.Bool b = (Value.Bool) v;
-			if(b.get()) {
-				return CONST(1);
-			} else {
-				return CONST(0);
-			}
+			return CONST(b.get());
 		} else if(v instanceof Value.Int) {
 			Value.Int b = (Value.Int) v;
 			// TODO: clearly a hack for now.
@@ -396,8 +420,7 @@ public class CLangCompiler extends AbstractTranslator<Declaration,Statement,Expr
 
 	@Override
 	public Expression constructDereference(Dereference expr, Expression operand) {
-		// TODO Auto-generated method stub
-		throw new IllegalArgumentException();
+		return DEREFERENCE(operand);
 	}
 
 	@Override
@@ -489,8 +512,7 @@ public class CLangCompiler extends AbstractTranslator<Declaration,Statement,Expr
 
 	@Override
 	public Expression constructLogicalIff(LogicalIff expr, Expression lhs, Expression rhs) {
-		// TODO Auto-generated method stub
-		throw new IllegalArgumentException();
+		return EQ(lhs,rhs);
 	}
 
 	@Override
@@ -521,8 +543,8 @@ public class CLangCompiler extends AbstractTranslator<Declaration,Statement,Expr
 
 	@Override
 	public Expression constructInvoke(Invoke expr, List<Expression> arguments) {
-		// TODO Auto-generated method stub
-		throw new IllegalArgumentException();
+		String name = expr.getBinding().getLink().getName().toString();
+		return INVOKE(name, arguments);
 	}
 
 	@Override
@@ -555,14 +577,13 @@ public class CLangCompiler extends AbstractTranslator<Declaration,Statement,Expr
 
 	@Override
 	public Expression constructRecordAccess(RecordAccess expr, Expression source) {
-		// TODO Auto-generated method stub
-		throw new IllegalArgumentException();
+		String field = expr.getField().get();
+		return FIELD_ACCESS(source,field);
 	}
 
 	@Override
-	public Expression constructRecordInitialiser(RecordInitialiser expr, List<Expression> operands) {
-		// TODO Auto-generated method stub
-		throw new IllegalArgumentException();
+	public Expression constructRecordInitialiser(RecordInitialiser expr, List<Pair<String,Expression>> operands) {
+		return INITIALISER(operands);
 	}
 
 	@Override
@@ -586,17 +607,17 @@ public class CLangCompiler extends AbstractTranslator<Declaration,Statement,Expr
 
 	@Override
 	public Type constructArrayType(WyilFile.Type.Array type, Type element) {
-		throw new UnsupportedOperationException();
+		return POINTER(element);
 	}
 
 	@Override
 	public Type constructBoolType(WyilFile.Type.Bool type) {
-		throw new UnsupportedOperationException();
+		return BOOL();
 	}
 
 	@Override
 	public Type constructByteType(WyilFile.Type.Byte type) {
-		return INT();
+		return UINT(8);
 	}
 
 	@Override
@@ -605,13 +626,19 @@ public class CLangCompiler extends AbstractTranslator<Declaration,Statement,Expr
 	}
 
 	@Override
-	public Type constructRecordType(WyilFile.Type.Record type, List<Type> types) {
-		throw new UnsupportedOperationException();
+	public Type constructNominalType(WyilFile.Type.Nominal type) {
+		String name = type.getLink().getName().toString();
+		return NOMINAL(name);
+	}
+
+	@Override
+	public Type constructRecordType(WyilFile.Type.Record type, List<Pair<Type,String>> types) {
+		return STRUCT(types);
 	}
 
 	@Override
 	public Type constructReferenceType(WyilFile.Type.Reference type, Type element) {
-		throw new UnsupportedOperationException();
+		return POINTER(element);
 	}
 
 	@Override
@@ -621,7 +648,7 @@ public class CLangCompiler extends AbstractTranslator<Declaration,Statement,Expr
 
 	@Override
 	public Type constructVoidType(WyilFile.Type.Void type) {
-		throw new UnsupportedOperationException();
+		return VOID();
 	}
 
 

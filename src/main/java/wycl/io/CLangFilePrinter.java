@@ -17,14 +17,12 @@ import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.util.List;
 
+import wycc.util.Pair;
 import wycl.core.CLangFile;
 import wycl.core.CLangFile.Declaration;
 import wycl.core.CLangFile.Expression;
 import wycl.core.CLangFile.Statement;
 import wycl.core.CLangFile.Type;
-import wyil.lang.WyilFile;
-import wyil.lang.WyilFile.Decl;
-import wyil.lang.WyilFile.Stmt;
 
 public class CLangFilePrinter {
 	private final PrintWriter out;
@@ -46,6 +44,8 @@ public class CLangFilePrinter {
 			writeInclude(indent, (Declaration.Include) d);
 		} else if (d instanceof Declaration.Method) {
 			writeMethod(indent, (Declaration.Method) d);
+		} else if (d instanceof Declaration.TypeDef) {
+			writeTypeDef(indent, (Declaration.TypeDef) d);
 		} else {
 			throw new IllegalArgumentException();
 		}
@@ -57,9 +57,33 @@ public class CLangFilePrinter {
 	}
 
 	private void writeMethod(int indent, Declaration.Method d) {
+		List<Declaration.Parameter> params = d.getParameters();
 		tab(indent);
-		out.print("void " + d.getName() + "()");
+		writeType(d.getReturnType());
+		out.print(" ");
+		out.print(d.getName());
+		out.print("(");
+		for(int i=0;i!=params.size();++i) {
+			Declaration.Parameter ith = params.get(i);
+			if(i != 0) {
+				out.print(", ");
+			}
+			writeType(ith.getType());
+			out.print(" ");
+			out.print(ith.getName());
+		}
+		out.print(")");
 		writeBlock(indent, d.getBody());
+		out.println();
+	}
+
+	private void writeTypeDef(int indent, Declaration.TypeDef d) {
+		tab(indent);
+		out.print("typedef ");
+		writeType(d.getType());
+		out.print(" ");
+		out.print(d.getName());
+		out.println(";");
 	}
 
 	private void writeVariableDeclaration(int indent, Declaration.Variable d) {
@@ -194,17 +218,42 @@ public class CLangFilePrinter {
 	}
 
 	private void writeExpression(Expression expr) {
-		if(expr instanceof Expression.Infix) {
+		if(expr instanceof Expression.ArrayAccess) {
+			writeArrayAccess((Expression.ArrayAccess) expr);
+		} else if(expr instanceof Expression.BoolConstant) {
+			writeBoolConstant((Expression.BoolConstant) expr);
+		} else if(expr instanceof Expression.FieldAccess) {
+			writeFieldAccess((Expression.FieldAccess) expr);
+		} else if(expr instanceof Expression.Infix) {
 			writeInfix((Expression.Infix) expr);
 		} else if(expr instanceof Expression.IntConstant) {
 			writeIntConstant((Expression.IntConstant) expr);
 		} else if(expr instanceof Expression.Invoke) {
 			writeInvoke((Expression.Invoke) expr);
+		} else if(expr instanceof Expression.DesignatedInitialiser) {
+			writeDesignatedInitialiser((Expression.DesignatedInitialiser) expr);
 		} else if(expr instanceof Expression.Var) {
 			writeVariableAccess((Expression.Var) expr);
 		} else {
 			throw new IllegalArgumentException();
 		}
+	}
+
+	private void writeArrayAccess(Expression.ArrayAccess expr) {
+		writeBracketedExpression(expr.getSource());
+		out.print("[");
+		writeExpression(expr.getIndex());
+		out.print("]");
+	}
+
+	private void writeBoolConstant(Expression.BoolConstant expr) {
+		out.print(expr.getConstant());
+	}
+
+	private void writeFieldAccess(Expression.FieldAccess expr) {
+		writeBracketedExpression(expr.getOperand());
+		out.print(".");
+		out.print(expr.getField());
 	}
 
 	private void writeInfix(Expression.Infix expr) {
@@ -232,6 +281,21 @@ public class CLangFilePrinter {
 		out.print(")");
 	}
 
+	private void writeDesignatedInitialiser(Expression.DesignatedInitialiser expr) {
+		List<Pair<String,Expression>> fields = expr.getFields();
+		out.print("{");
+		for(int i=0;i!=fields.size();++i) {
+			if(i != 0) {
+				out.print(", ");
+			}
+			out.print(".");
+			out.print(fields.get(i).first());
+			out.print(" = ");
+			writeExpression(fields.get(i).second());
+		}
+		out.print("}");
+	}
+
 	public void writeVariableAccess(Expression.Var expr) {
 		out.print(expr.getName());
 	}
@@ -241,15 +305,62 @@ public class CLangFilePrinter {
 	// ============================================================
 
 	private void writeType(Type type) {
-		if(type instanceof Type.Int) {
-			writeTypeInt((Type.Int)type);
+		if (type instanceof Type.Bool) {
+			writeTypeBool((Type.Bool) type);
+		} else if (type instanceof Type.Int) {
+			writeTypeInt((Type.Int) type);
+		} else if (type instanceof Type.Nominal) {
+			writeTypeNominal((Type.Nominal) type);
+		} else if (type instanceof Type.Pointer) {
+			writeTypePointer((Type.Pointer) type);
+		} else if (type instanceof Type.Struct) {
+			writeTypeStruct((Type.Struct) type);
+		} else if (type instanceof Type.Void) {
+			writeTypeVoid((Type.Void) type);
 		} else {
 			throw new IllegalArgumentException();
 		}
 	}
 
+	private void writeTypePointer(Type.Pointer type) {
+		writeType(type.getElement());
+		out.print("*");
+	}
+
+	private void writeTypeBool(Type.Bool type) {
+		out.print("bool");
+	}
+
 	private void writeTypeInt(Type.Int type) {
-		out.print("int");
+		if(type.hasFixedWidth()) {
+			out.print(type.isSigned() ? "int" : "uint");
+			out.print(type.getWidth());
+			out.print("_t");
+		} else if(type.isSigned()) {
+			out.print("int");
+		} else {
+			out.print("unsigned int");
+		}
+	}
+
+	private void writeTypeNominal(Type.Nominal type) {
+		out.print(type.getName());
+	}
+
+	private void writeTypeStruct(Type.Struct type) {
+		List<Pair<Type,String>> fields = type.getFields();
+		out.print("struct { ");
+		for(int i=0;i!=fields.size();++i) {
+			writeType(fields.get(i).first());
+			out.print(" ");
+			out.print(fields.get(i).second());
+			out.print(";");
+		}
+		out.print(" }");
+	}
+
+	private void writeTypeVoid(Type.Void type) {
+		out.print("void");
 	}
 
 	private void tab(int indent) {

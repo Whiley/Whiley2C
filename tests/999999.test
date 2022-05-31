@@ -1,11 +1,5 @@
 ====
 >>> main.whiley
-public export method main() -> int:
-   for i in 0..10:
-       if i < 0:
-          skip
-          assert 1 != 1
-       else:
-          assert 1 == 1
-   return 1
+public export method main():
+   byte b
 ---

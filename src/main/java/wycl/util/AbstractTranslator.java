@@ -96,8 +96,9 @@ public abstract class AbstractTranslator<D, S, E, T> {
 	}
 
 	public D visitType(Decl.Type decl) {
+		T type = visitType(decl.getType());
 		List<E> invariant = visitHomogoneousExpressions(decl.getInvariant());
-		return constructType(decl, invariant);
+		return constructType(decl, invariant, type);
 	}
 
 	public D visitCallable(Decl.Callable decl) {
@@ -904,10 +905,10 @@ public abstract class AbstractTranslator<D, S, E, T> {
 	public E visitRecordInitialiser(Expr.RecordInitialiser expr) {
 		Tuple<Identifier> fields = expr.getFields();
 		Tuple<Expr> operands = expr.getOperands();
-		List<E> args = new ArrayList<>();
+		List<Pair<String,E>> args = new ArrayList<>();
 		for (int i = 0; i != fields.size(); ++i) {
 			Expr operand = operands.get(i);
-			args.add(visitExpression(operand));
+			args.add(new Pair<>(fields.get(i).get(), visitExpression(operand)));
 		}
 		return constructRecordInitialiser(expr,args);
 	}
@@ -952,6 +953,8 @@ public abstract class AbstractTranslator<D, S, E, T> {
 			return visitByteType((Type.Byte)type);
 		case TYPE_int:
 			return visitIntType((Type.Int)type);
+		case TYPE_nominal:
+			return visitNominalType((Type.Nominal)type);
 		case TYPE_record:
 			return visitRecordType((Type.Record)type);
 		case TYPE_reference:
@@ -982,11 +985,17 @@ public abstract class AbstractTranslator<D, S, E, T> {
 		return constructIntType(type);
 	}
 
+	public T visitNominalType(Type.Nominal type) {
+		return constructNominalType(type);
+	}
+
 	public T visitRecordType(Type.Record type) {
-		ArrayList<T> types = new ArrayList<>();
+		ArrayList<Pair<T,String>> types = new ArrayList<>();
 		WyilFile.Tuple<Type.Field> fields = type.getFields();
 		for(int i=0;i!=fields.size();++i) {
-			types.add(visitType(fields.get(i).getType()));
+			Type.Field ith = fields.get(i);
+			T tth = visitType(fields.get(i).getType());
+			types.add(new Pair<>(tth, ith.getName().toString()));
 		}
 		return constructRecordType(type, types);
 	}
@@ -1014,7 +1023,7 @@ public abstract class AbstractTranslator<D, S, E, T> {
 
 	public abstract D constructImport(Decl.Import d);
 
-	public abstract D constructType(Decl.Type d, List<E> invariant);
+	public abstract D constructType(Decl.Type d, List<E> invariant, T type);
 
 	public abstract D constructStaticVariable(Decl.StaticVariable d, E initialiser);
 
@@ -1176,7 +1185,7 @@ public abstract class AbstractTranslator<D, S, E, T> {
 
 	public abstract E constructRecordAccess(Expr.RecordAccess expr, E source);
 
-	public abstract E constructRecordInitialiser(Expr.RecordInitialiser expr, List<E> operands);
+	public abstract E constructRecordInitialiser(Expr.RecordInitialiser expr, List<Pair<String,E>> operands);
 
 	public abstract E constructRecordUpdate(Expr.RecordUpdate expr, E source, E value);
 
@@ -1198,7 +1207,9 @@ public abstract class AbstractTranslator<D, S, E, T> {
 
 	public abstract T constructIntType(Type.Int type);
 
-	public abstract T constructRecordType(Type.Record type, List<T> types);
+	public abstract T constructNominalType(Type.Nominal type);
+
+	public abstract T constructRecordType(Type.Record type, List<Pair<T,String>> types);
 
 	public abstract T constructReferenceType(Type.Reference type, T element);
 

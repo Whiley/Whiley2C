@@ -17,6 +17,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import wycc.util.Pair;
 import wycl.core.CLangFile;
 
 public class CLangFile {
@@ -84,14 +85,33 @@ public class CLangFile {
 			}
 		}
 
+		public static class TypeDef extends Abstract implements Declaration {
+			private final Type type;
+
+			public TypeDef(String name, Type type) {
+				super(name);
+				this.type = type;
+			}
+
+			public Type getType() {
+				return type;
+			}
+		}
+
 		public static class Method extends Abstract implements Declaration {
+			private final Type returnType;
 			private final List<Parameter> parameters;
 			private final Statement.Block body;
 
-			public Method(String name, List<Parameter> parameters, Statement.Block body) {
+			public Method(Type returnType, String name, List<Parameter> parameters, Statement.Block body) {
 				super(name);
+				this.returnType = returnType;
 				this.parameters = parameters;
 				this.body = body;
+			}
+
+			public Type getReturnType() {
+				return returnType;
 			}
 
 			public List<Parameter> getParameters() {
@@ -127,8 +147,8 @@ public class CLangFile {
 		}
 
 		public static class Parameter extends Variable {
-			public Parameter(Type type, String name, Expression initialiser) {
-				super(type, name, initialiser);
+			public Parameter(Type type, String name) {
+				super(type, name, null);
 			}
 		}
 	}
@@ -142,6 +162,7 @@ public class CLangFile {
 		public static class Assign implements Statement {
 			private final Expression lhs;
 			private final Expression rhs;
+
 			private Assign(Expression lhs, Expression rhs) {
 				this.lhs = lhs;
 				this.rhs = rhs;
@@ -157,7 +178,8 @@ public class CLangFile {
 		}
 
 		public static class Continue implements Statement {
-			private Continue() {}
+			private Continue() {
+			}
 		}
 
 		public static class Block implements Statement {
@@ -181,7 +203,8 @@ public class CLangFile {
 		}
 
 		public static class Break implements Statement {
-			private Break() {}
+			private Break() {
+			}
 		}
 
 		public static class DoWhile implements Statement {
@@ -347,13 +370,30 @@ public class CLangFile {
 			}
 		}
 
+		public abstract class Postfix implements Expression {
+			private final Expression operand;
+
+			private Postfix(Expression operand) {
+				this.operand = operand;
+			}
+
+			public Expression getOperand() {
+				return operand;
+			}
+
+			@Override
+			public boolean requiresParenthesis() {
+				return false;
+			}
+		}
+
 		// ======================================================
 		// Arithmetic
 		// ======================================================
 
-		public class Add extends Infix{
+		public class Add extends Infix {
 			private Add(Expression lhs, Expression rhs) {
-				super(lhs,rhs);
+				super(lhs, rhs);
 			}
 
 			@Override
@@ -362,40 +402,44 @@ public class CLangFile {
 			}
 		}
 
-		public class Sub extends Infix{
+		public class Sub extends Infix {
 			private Sub(Expression lhs, Expression rhs) {
-				super(lhs,rhs);
+				super(lhs, rhs);
 			}
+
 			@Override
 			public String getOperatorString() {
 				return "-";
 			}
 		}
 
-		public class Div extends Infix{
+		public class Div extends Infix {
 			private Div(Expression lhs, Expression rhs) {
-				super(lhs,rhs);
+				super(lhs, rhs);
 			}
+
 			@Override
 			public String getOperatorString() {
 				return "/";
 			}
 		}
 
-		public class Mul extends Infix{
+		public class Mul extends Infix {
 			private Mul(Expression lhs, Expression rhs) {
-				super(lhs,rhs);
+				super(lhs, rhs);
 			}
+
 			@Override
 			public String getOperatorString() {
 				return "*";
 			}
 		}
 
-		public class Rem extends Infix{
+		public class Rem extends Infix {
 			private Rem(Expression lhs, Expression rhs) {
-				super(lhs,rhs);
+				super(lhs, rhs);
 			}
+
 			@Override
 			public String getOperatorString() {
 				return "%";
@@ -407,6 +451,24 @@ public class CLangFile {
 				super(operand);
 			}
 		}
+
+		public class BoolConstant implements Expression {
+			private final boolean constant;
+
+			private BoolConstant(boolean constant) {
+				this.constant = constant;
+			}
+
+			public boolean getConstant() {
+				return constant;
+			}
+
+			@Override
+			public boolean requiresParenthesis() {
+				return false;
+			}
+		}
+
 		public class IntConstant implements Expression {
 			private final int constant;
 
@@ -417,6 +479,7 @@ public class CLangFile {
 			public int getConstant() {
 				return constant;
 			}
+
 			@Override
 			public boolean requiresParenthesis() {
 				return false;
@@ -452,8 +515,9 @@ public class CLangFile {
 
 		public class Equals extends Infix {
 			private Equals(Expression lhs, Expression rhs) {
-				super(lhs,rhs);
+				super(lhs, rhs);
 			}
+
 			@Override
 			public String getOperatorString() {
 				return "==";
@@ -462,8 +526,9 @@ public class CLangFile {
 
 		public class NotEquals extends Infix {
 			private NotEquals(Expression lhs, Expression rhs) {
-				super(lhs,rhs);
+				super(lhs, rhs);
 			}
+
 			@Override
 			public String getOperatorString() {
 				return "!=";
@@ -472,8 +537,9 @@ public class CLangFile {
 
 		public class LessThan extends Infix {
 			private LessThan(Expression lhs, Expression rhs) {
-				super(lhs,rhs);
+				super(lhs, rhs);
 			}
+
 			@Override
 			public String getOperatorString() {
 				return "<";
@@ -482,8 +548,9 @@ public class CLangFile {
 
 		public class LessThanEqual extends Infix {
 			private LessThanEqual(Expression lhs, Expression rhs) {
-				super(lhs,rhs);
+				super(lhs, rhs);
 			}
+
 			@Override
 			public String getOperatorString() {
 				return "<=";
@@ -492,8 +559,9 @@ public class CLangFile {
 
 		public class GreaterThan extends Infix {
 			private GreaterThan(Expression lhs, Expression rhs) {
-				super(lhs,rhs);
+				super(lhs, rhs);
 			}
+
 			@Override
 			public String getOperatorString() {
 				return ">";
@@ -502,8 +570,9 @@ public class CLangFile {
 
 		public class GreaterThanEqual extends Infix {
 			private GreaterThanEqual(Expression lhs, Expression rhs) {
-				super(lhs,rhs);
+				super(lhs, rhs);
 			}
+
 			@Override
 			public String getOperatorString() {
 				return ">=";
@@ -518,8 +587,9 @@ public class CLangFile {
 
 		public class And extends Infix {
 			private And(Expression lhs, Expression rhs) {
-				super(lhs,rhs);
+				super(lhs, rhs);
 			}
+
 			@Override
 			public String getOperatorString() {
 				return "&&";
@@ -528,8 +598,9 @@ public class CLangFile {
 
 		public class Or extends Infix {
 			private Or(Expression lhs, Expression rhs) {
-				super(lhs,rhs);
+				super(lhs, rhs);
 			}
+
 			@Override
 			public String getOperatorString() {
 				return "||";
@@ -540,17 +611,79 @@ public class CLangFile {
 		// Other
 		// ======================================================
 
-		public class Var implements Expression{
-			private final String name;
-			private Var(String name) {
-				this.name = name;
+		public class ArrayAccess implements Expression {
+			private final Expression source;
+			private final Expression index;
+
+			public ArrayAccess(Expression source, Expression index) {
+				this.source = source;
+				this.index = index;
 			}
-			public String getName() {
-				return name;
+
+			public Expression getSource() {
+				return source;
 			}
+
+			public Expression getIndex() {
+				return index;
+			}
+
 			@Override
 			public boolean requiresParenthesis() {
 				return false;
+			}
+		}
+
+		public class Dereference extends Prefix {
+			public Dereference(Expression source) {
+				super(source);
+			}
+		}
+
+		public class Var implements Expression {
+			private final String name;
+
+			private Var(String name) {
+				this.name = name;
+			}
+
+			public String getName() {
+				return name;
+			}
+
+			@Override
+			public boolean requiresParenthesis() {
+				return false;
+			}
+		}
+
+		public class DesignatedInitialiser implements Expression {
+			private final List<Pair<String, Expression>> fields;
+
+			public DesignatedInitialiser(List<Pair<String, Expression>> fields) {
+				this.fields = fields;
+			}
+
+			public List<Pair<String, Expression>> getFields() {
+				return fields;
+			}
+
+			@Override
+			public boolean requiresParenthesis() {
+				return false;
+			}
+		}
+
+		public class FieldAccess extends Postfix {
+			private final String field;
+
+			public FieldAccess(Expression operand, String field) {
+				super(operand);
+				this.field = field;
+			}
+
+			public String getField() {
+				return field;
 			}
 		}
 	}
@@ -560,11 +693,92 @@ public class CLangFile {
 	// =========================================================================
 
 	public interface Type {
-		public class Int implements Type {
-			private Int() {
+
+		public class Bool implements Type {
+			private Bool() {
 
 			}
 		}
+
+		public class Int implements Type {
+			private boolean signed;
+			private int width;
+
+			private Int(boolean signed) {
+				this.signed = signed;
+				this.width = Integer.MAX_VALUE;
+			}
+
+			private Int(boolean signed, int width) {
+				if (width != 8 && width != 16 && width != 32 && width != 64) {
+					throw new IllegalArgumentException("invalid integer width");
+				}
+				this.signed = signed;
+				this.width = width;
+			}
+
+			public boolean hasFixedWidth() {
+				return width != Integer.MAX_VALUE;
+			}
+
+			public boolean isSigned() {
+				return signed;
+			}
+
+			public int getWidth() {
+				return width;
+			}
+		}
+
+		public class Nominal implements Type {
+			private final String name;
+
+			private Nominal(String name) {
+				this.name = name;
+			}
+
+			public String getName() {
+				return name;
+			}
+		}
+
+		public class Pointer implements Type {
+			private final Type element;
+
+			public Pointer(Type element) {
+				this.element = element;
+			}
+
+			public Type getElement() {
+				return element;
+			}
+		}
+
+		public class Struct implements Type {
+			private final List<Pair<Type, String>> fields;
+
+			public Struct(List<Pair<Type, String>> fields) {
+				this.fields = fields;
+			}
+
+			public List<Pair<Type, String>> getFields() {
+				return fields;
+			}
+		}
+
+		public class Void implements Type {
+			private Void() {
+
+			}
+		}
+	}
+
+	// =========================================================================
+	// Declaration Constructors
+	// =========================================================================
+
+	public static Declaration TYPEDEF(String name, Type type) {
+		return new Declaration.TypeDef(name, type);
 	}
 
 	// =========================================================================
@@ -572,7 +786,7 @@ public class CLangFile {
 	// =========================================================================
 
 	public static Statement ASSIGN(Expression lhs, Expression rhs) {
-		return new Statement.Assign(lhs,rhs);
+		return new Statement.Assign(lhs, rhs);
 	}
 
 	public static Statement CONTINUE() {
@@ -607,12 +821,36 @@ public class CLangFile {
 	// Expression Constructors
 	// =========================================================================
 
+	public static Expression ARRAY_ACCESS(Expression source, Expression index) {
+		return new Expression.ArrayAccess(source, index);
+	}
+
+	public static Expression CONST(boolean value) {
+		return new Expression.BoolConstant(value);
+	}
+
 	public static Expression CONST(int value) {
 		return new Expression.IntConstant(value);
 	}
 
+	public static Expression DEREFERENCE(Expression source) {
+		return new Expression.Dereference(source);
+	}
+
 	public static Expression EQ(Expression lhs, Expression rhs) {
 		return new Expression.Equals(lhs, rhs);
+	}
+
+	public static Expression FIELD_ACCESS(Expression source, String field) {
+		return new Expression.FieldAccess(source, field);
+	}
+
+	public static Expression INVOKE(String name, List<Expression> arguments) {
+		return new Expression.Invoke(name, arguments);
+	}
+
+	public static Expression INITIALISER(List<Pair<String, Expression>> fields) {
+		return new Expression.DesignatedInitialiser(fields);
 	}
 
 	public static Expression NEQ(Expression lhs, Expression rhs) {
@@ -671,16 +909,49 @@ public class CLangFile {
 		return new Expression.Neg(operand);
 	}
 
-	public static Expression INVOKE(String name, List<Expression> arguments) {
-		return new Expression.Invoke(name, arguments);
-	}
-
 	public static Expression VAR(String name) {
 		return new Expression.Var(name);
 	}
 
+	// =========================================================================
+	// Type Constructors
+	// =========================================================================
+
+	public static Type BOOL() {
+		return new Type.Bool();
+	}
+
 	public static Type INT() {
-		return new Type.Int();
+		return new Type.Int(true);
+	}
+
+	public static Type INT(int width) {
+		if(width != 8 && width != 16 && width != 32 && width != 64) {
+			throw new IllegalArgumentException("invalid integer width");
+		}
+		return new Type.Int(true,width);
+	}
+
+	public static Type NOMINAL(String name) {
+		return new Type.Nominal(name);
+	}
+
+	public static Type POINTER(Type element) {
+		return new Type.Pointer(element);
+	}
+
+	public static Type STRUCT(List<Pair<Type, String>> fields) {
+		return new Type.Struct(fields);
+	}
+
+	public static Type UINT(int width) {
+		if(width != 8 && width != 16 && width != 32 && width != 64) {
+			throw new IllegalArgumentException("invalid integer width");
+		}
+		return new Type.Int(false,width);
+	}
+
+	public static Type VOID() {
+		return new Type.Void();
 	}
 }
-
