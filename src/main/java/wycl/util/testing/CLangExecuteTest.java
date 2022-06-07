@@ -15,40 +15,41 @@ package wycl.util.testing;
 
 import java.io.IOException;
 import java.nio.file.Path;
-import java.util.Arrays;
 import java.util.Map;
 
-import wyc.util.testing.WhileyCompileTest;
-import wycc.lang.Syntactic;
-import wycc.util.*;
+import wycc.util.TextFile;
+import wycc.util.Trie;
 import wycc.util.testing.TestFile;
-import wycc.util.testing.TestStage;
 import wycc.util.testing.TestFile.Error;
-import wycl.Main;
+import wycc.util.testing.TestStage;
+import wycl.util.StreamGrabber;
 import wyil.lang.WyilFile;
 
-public class CLangCompileTest implements TestStage {
+public class CLangExecuteTest implements TestStage {
 
 	@Override
 	public Result apply(Trie path, Path dir, Map<Trie, TextFile> state, TestFile tf) throws IOException {
-		boolean ignored = tf.get(Boolean.class, "c.compile.ignore").orElse(false);
+		boolean ignored = tf.get(Boolean.class, "c.execute.ignore").orElse(false);
 		// Test was expected to compile, so attempt to run the code.
 		String unit = tf.get(String.class, "main.file").orElse("main");
+		//
 		try {
-			boolean r = new Main().setWyilDir(dir.toFile()).setCDir(dir.toFile()).setTarget(path).addSource(path).run();
-			//
-			if(r) {
-				return new Result(ignored, new Error[0]);
-			} else {
+			Path executable = dir.resolve(path.toString());
+			Process p = Runtime.getRuntime().exec(executable.toString());
+			StringBuffer syserr = new StringBuffer();
+			StringBuffer sysout = new StringBuffer();
+			new StreamGrabber(p.getErrorStream(), syserr);
+			new StreamGrabber(p.getInputStream(), sysout);
+			int exitCode = p.waitFor();
+			if (exitCode != 0) {
+				System.err.println(syserr); // propagate anything from the error
 				TestFile.Coordinate c = new TestFile.Coordinate(0, new TestFile.Range(0, 0));
 				return new Result(ignored, new Error(WyilFile.INTERNAL_FAILURE, Trie.fromString(unit), c));
 			}
-		} catch (Syntactic.Exception e) {
-			e.printStackTrace();
-			TestFile.Error err = WhileyCompileTest.toError(state, e);
-			return new TestStage.Result(ignored, new TestFile.Error[] { err });
-		} catch(Throwable e) {
-			e.printStackTrace();
+			// stream
+			return new Result(ignored, new Error[0]);
+		} catch (Exception ex) {
+			ex.printStackTrace();
 			TestFile.Coordinate c = new TestFile.Coordinate(0, new TestFile.Range(0, 0));
 			return new Result(ignored, new Error(WyilFile.INTERNAL_FAILURE, Trie.fromString(unit), c));
 		}
@@ -56,11 +57,11 @@ public class CLangCompileTest implements TestStage {
 
 	@Override
 	public Error[] filter(Error[] errors) {
-		return Arrays.asList(errors).stream().filter(m -> m.getErrorNumber() == 0).toArray(TestFile.Error[]::new);
+		return new Error[0];
 	}
 
 	@Override
 	public boolean required() {
-		return true;
+		return false;
 	}
 }
