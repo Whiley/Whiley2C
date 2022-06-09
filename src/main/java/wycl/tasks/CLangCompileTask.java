@@ -16,11 +16,9 @@ package wycl.tasks;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-
 import wycc.util.Trie;
 import wycl.core.CLangFile;
 import wyil.lang.WyilFile;
-
 
 public class CLangCompileTask {
 	/**
@@ -28,12 +26,21 @@ public class CLangCompileTask {
 	 */
 	private Trie target = Trie.fromString("main");
 	/**
+	 * Determine entry point.
+	 */
+	private Trie entry = null;
+	/**
 	 * The set of source files that this task will compiler from.
 	 */
 	private final List<WyilFile> sources = new ArrayList<>();
 
 	public CLangCompileTask setTarget(Trie target) {
 		this.target = target;
+		return this;
+	}
+
+	public CLangCompileTask setEntry(Trie entry) {
+		this.entry = entry;
 		return this;
 	}
 
@@ -53,6 +60,10 @@ public class CLangCompileTask {
 		// Process source files one by one
 		for (WyilFile i : sources) {
 			new CLangCompiler(cFile).visitModule(i);
+		}
+		//
+		if (entry != null) {
+			new CLangCompiler(cFile).addEntryPoint(entry);
 		}
 		//
 		return cFile;

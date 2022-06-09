@@ -48,6 +48,10 @@ public class Main {
 	 */
 	private Trie target = Trie.fromString("main");
 	/**
+	 * Determine entry point.
+	 */
+	private Trie entry = null;
+	/**
 	 * List of C files to include.
 	 */
 	private List<File> includes = new ArrayList<>();
@@ -81,9 +85,14 @@ public class Main {
 		return this;
 	}
 
+	public Main setEntry(Trie entry) {
+		this.entry = entry;
+		return this;
+	}
+
 	public boolean run() throws IOException {
 		// Construct compile task
-		CLangCompileTask task = new CLangCompileTask().setTarget(target);
+		CLangCompileTask task = new CLangCompileTask().setTarget(target).setEntry(entry);
 		// Add sources
 		for(Trie source : sources) {
 			// Extract source file

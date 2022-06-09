@@ -1,5 +1,5 @@
 ====
 >>> main.whiley
-public export method main():
+public export method test():
    skip
 ---

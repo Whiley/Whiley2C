@@ -21,6 +21,8 @@ import java.util.List;
 import wycc.util.AbstractCompilationUnit.Tuple;
 import wycc.util.AbstractCompilationUnit.Value;
 import wycc.util.Pair;
+import wycc.util.Trie;
+
 import static wycl.core.CLangFile.*;
 import wycl.core.CLangFile;
 import wycl.core.CLangFile.Expression;
@@ -48,6 +50,11 @@ public class CLangCompiler extends AbstractTranslator<Declaration,Statement,Expr
 	 * subtypes or not.
 	 */
 	private final static Subtyping.Environment subtyping = new IncrementalSubtypingEnvironment();
+
+    /**
+     * Flag to signal whether or not to apply mangling.  By default this is enabled.
+     */
+    private boolean mangling = true;
 
 	/**
 	 * Represents the JavaScriptFile which is being written to.
@@ -77,6 +84,15 @@ public class CLangCompiler extends AbstractTranslator<Declaration,Statement,Expr
 		}
 	}
 
+	public void addEntryPoint(Trie entry) {
+		String name = entry.toString().replace("/", "_");
+		ArrayList<Declaration.Parameter> params = new ArrayList<>();
+		Statement.Block body = new Statement.Block(INVOKE(name, Arrays.asList()), RETURN(INT_CONST(0)));
+		Declaration main = new Declaration.Method(INT(), "main", params, body);
+		// Add main declaration
+		cFile.getDeclarations().add(main);
+	}
+
 	// ====================================================================================
 	// Declarations
 	// ====================================================================================
@@ -100,16 +116,17 @@ public class CLangCompiler extends AbstractTranslator<Declaration,Statement,Expr
 
 	@Override
 	public Declaration constructProperty(Property d, Statement body) {
+		String name = toMangledName(d);
 		ArrayList<Declaration.Parameter> params = new ArrayList<>();
 		// Translate return
 		Type returnType = visitType(d.getType().getReturn());
 		// Translate parameters
 		for(Decl.Variable v : d.getParameters()) {
 			Type type = visitType(v.getType());
-			String name = v.getName().get();
-			params.add(new Declaration.Parameter(type,name));
+			String vn = v.getName().get();
+			params.add(new Declaration.Parameter(type,vn));
 		}
-		return new Declaration.Method(returnType, d.getName().get(), params, (Statement.Block) body);
+		return new Declaration.Method(returnType, name, params, (Statement.Block) body);
 	}
 
 	@Override
@@ -120,30 +137,32 @@ public class CLangCompiler extends AbstractTranslator<Declaration,Statement,Expr
 
 	@Override
 	public Declaration constructFunction(Function d, List<Expression> precondition, List<Expression> postcondition, Statement body) {
+		String name = toMangledName(d);
 		ArrayList<Declaration.Parameter> params = new ArrayList<>();
 		// Translate return
 		Type returnType = visitType(d.getType().getReturn());
 		// Translate parameters
 		for(Decl.Variable v : d.getParameters()) {
 			Type type = visitType(v.getType());
-			String name = v.getName().get();
-			params.add(new Declaration.Parameter(type,name));
+			String vn = v.getName().get();
+			params.add(new Declaration.Parameter(type,vn));
 		}
-		return new Declaration.Method(returnType, d.getName().get(), params, (Statement.Block) body);
+		return new Declaration.Method(returnType, name, params, (Statement.Block) body);
 	}
 
 	@Override
 	public Declaration constructMethod(Method d, List<Expression> precondition, List<Expression> postcondition, Statement body) {
+		String name = toMangledName(d);
 		ArrayList<Declaration.Parameter> params = new ArrayList<>();
 		// Translate return
 		Type returnType = visitType(d.getType().getReturn());
 		// Translate parameters
 		for(Decl.Variable v : d.getParameters()) {
 			Type type = visitType(v.getType());
-			String name = v.getName().get();
-			params.add(new Declaration.Parameter(type,name));
+			String vn = v.getName().get();
+			params.add(new Declaration.Parameter(type,vn));
 		}
-		return new Declaration.Method(returnType, d.getName().get(), params, (Statement.Block) body);
+		return new Declaration.Method(returnType, name, params, (Statement.Block) body);
 	}
 
 	@Override
@@ -667,4 +686,40 @@ public class CLangCompiler extends AbstractTranslator<Declaration,Statement,Expr
 		return null;
 	}
 
+	// =======================================================================================================
+	// Helpers
+	// =======================================================================================================
+
+	/**
+     * Determine the appropriate mangled string for a given named declaration. This is critical to ensuring that
+     * overloaded declarations do not clash.
+     *
+     * @param decl The declaration for which the mangle is being determined
+     * @param type The concrete type for the declaration in question (as this may differ from the declared type when
+     *             type parameters are included).
+     * @return
+     */
+    private String toMangledName(WyilFile.Decl.Named<?> decl, WyilFile.Type type) {
+        // Determine whether this is an exported symbol or not
+        boolean exported = decl.getModifiers().match(WyilFile.Modifier.Export.class) != null;
+        // Check whether mangling applies
+        if(mangling) {
+            // Construct base name
+            String name = decl.getQualifiedName().toString().replace("::", "_");
+            // Add type mangles for non-exported symbols only
+            return exported ? name : (name + "_" + mangler.getMangle(type));
+        } else {
+            return decl.getName().toString();
+        }
+    }
+
+    /**
+     * Provides a default argument based on declaration's declared type.
+     *
+     * @param decl
+     * @return
+     */
+    private String toMangledName(WyilFile.Decl.Named<?> decl) {
+        return toMangledName(decl, decl.getType());
+    }
 }

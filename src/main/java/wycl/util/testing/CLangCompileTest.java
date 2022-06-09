@@ -34,8 +34,10 @@ public class CLangCompileTest implements TestStage {
 		boolean ignored = tf.get(Boolean.class, "c.compile.ignore").orElse(false);
 		// Test was expected to compile, so attempt to run the code.
 		String unit = tf.get(String.class, "main.file").orElse("main");
+		String method = tf.get(String.class, "main.method").orElse("test");
+		Trie entry = Trie.fromString(unit).append(method);
 		try {
-			boolean r = new Main().setWyilDir(dir.toFile()).setCDir(dir.toFile()).setTarget(path).addSource(path).run();
+			boolean r = new Main().setWyilDir(dir.toFile()).setCDir(dir.toFile()).setTarget(path).addSource(path).setEntry(entry).run();
 			//
 			if(r) {
 				return new Result(ignored, new Error[0]);
